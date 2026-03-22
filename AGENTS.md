@@ -85,6 +85,36 @@ Unless the repository later defines a different rule:
 - Protect local data from remote sync failures
 - Keep naming and module boundaries consistent with the planned app/main/renderer split
 
+## Git Workflow Policy / Politica de Workflow Git
+
+All programming agents working in this repository must follow these Git rules:
+
+1. Use commit conventions in every commit message.
+   The subject line must follow a conventional prefix such as `docs:`, `feat:`, `fix:`, `refactor:`, or equivalent.
+
+2. Write detailed commit messages.
+   Explain what changed and why, especially when the diff affects architecture, repository conventions, or shared workflow.
+
+3. Push after every commit.
+   Do not leave local commits unpublished unless the user explicitly asks not to push.
+
+4. Stage all relevant tracked and untracked changes for the task before committing.
+   Respect `.gitignore`, but do not omit files that are part of the intended change set.
+
+5. For detailed or multiline commit messages, always write the message to a temporary file and run `git commit -F <file>`.
+   Do not use inline multiline commit flags for this repository workflow.
+
+6. Never use `git commit -m` for multiline messages or messages containing characters that are easier to preserve via file-based commit input.
+   This includes cases with backticks, dollar signs, backslashes, or markdown-like formatting.
+
+7. Use the repository commit author required by the project when creating commits through an agent workflow.
+   Current required author: `Ivan Yort <ivan.yort@gmail.com>`.
+
+## Git Workflow Summary / Resumo do Workflow Git
+
+**EN:** If an agent makes a repository change, the default expectation is: stage the full task diff, create a conventional detailed commit using a temporary message file, and push immediately.  
+**PT-BR:** Se um agente fizer uma mudanca no repositorio, a expectativa padrao e: adicionar todo o diff da tarefa, criar um commit convencional detalhado usando arquivo temporario de mensagem e fazer push imediatamente.
+
 ## When to Update This File / Quando Atualizar Este Arquivo
 
 Update `AGENTS.md` when:
