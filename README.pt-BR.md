@@ -62,6 +62,8 @@ A estrutura abaixo esta planejada, mas ainda nao foi implementada.
 
 ## Resumo do Roadmap
 
+Para o roadmap detalhado, veja [`ROADMAP.md`](./ROADMAP.md).
+
 - MVP: quadro unico, 3 colunas, drag and drop, persistencia em SQLite, always-on-top
 - Fase 2: multiplos quadros, sync com Google Drive, system tray, temas
 - Futuro: campos customizados, notificacoes, resolucao avancada de conflitos, app mobile complementar
@@ -70,6 +72,8 @@ A estrutura abaixo esta planejada, mas ainda nao foi implementada.
 
 - [`README.md`](./README.md): versao em ingles deste README
 - [`SPEC.md`](./SPEC.md): especificacao do produto
+- [`ROADMAP.md`](./ROADMAP.md): marcos planejados e prioridades futuras
+- [`IMPLEMENTATION.md`](./IMPLEMENTATION.md): estado atual do repositorio e marcos entregues
 - [`AGENTS.md`](./AGENTS.md): guia operacional para agentes de programacao
 - [`DECISIONS.md`](./DECISIONS.md): registro de decisoes arquiteturais
 
@@ -84,6 +88,7 @@ Este repositorio pode conter codigo, documentacao e estrutura de projeto criados
 ## Como Comecar Hoje
 
 Ainda nao existe um scaffold executavel da aplicacao. O proximo passo atual e transformar a especificacao do produto na estrutura inicial do projeto com Electron/React/TypeScript.
+O estado atual do repositorio esta documentado em [`IMPLEMENTATION.md`](./IMPLEMENTATION.md).
 
 ## Licenca
 

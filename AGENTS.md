@@ -68,6 +68,8 @@ Agents should stay aligned with these project-level decisions:
 7. Keep documentation synchronized with reality.
    Update [`README.md`](./README.md) when public-facing setup or project status changes.
    Update [`README.pt-BR.md`](./README.pt-BR.md) when the Portuguese public-facing guidance changes.
+   Update [`ROADMAP.md`](./ROADMAP.md) when priorities or future direction change.
+   Update [`IMPLEMENTATION.md`](./IMPLEMENTATION.md) when a relevant delivery changes the actual repository state.
    Update [`DECISIONS.md`](./DECISIONS.md) when architecture or implementation direction changes materially.
 
 8. Update Markdown documentation as part of every relevant delivery.
@@ -81,11 +83,12 @@ Agents should stay aligned with these project-level decisions:
 
 ## Documentation Expectations / Expectativas de Documentacao
 
-**EN:** Public-facing repository guidance belongs in `README.md` and `README.pt-BR.md`. Agent-specific rules belong in `AGENTS.md`. Architectural intent and changes belong in `DECISIONS.md`.  
-**PT-BR:** Orientacoes publicas do repositorio pertencem ao `README.md` e ao `README.pt-BR.md`. Regras especificas para agentes pertencem ao `AGENTS.md`. Intencao arquitetural e mudancas relevantes pertencem ao `DECISIONS.md`.
+**EN:** Public-facing repository guidance belongs in `README.md` and `README.pt-BR.md`. Future planning belongs in `ROADMAP.md`. Real implementation state and delivered milestones belong in `IMPLEMENTATION.md`. Agent-specific rules belong in `AGENTS.md`. Architectural intent and changes belong in `DECISIONS.md`.  
+**PT-BR:** Orientacoes publicas do repositorio pertencem ao `README.md` e ao `README.pt-BR.md`. Planejamento futuro pertence ao `ROADMAP.md`. Estado real da implementacao e marcos entregues pertencem ao `IMPLEMENTATION.md`. Regras especificas para agentes pertencem ao `AGENTS.md`. Intencao arquitetural e mudancas relevantes pertencem ao `DECISIONS.md`.
 
 Avoid copying large sections from `SPEC.md`. Prefer linking back to the spec and summarizing only what is necessary.
 Keep AI workflow policy and public transparency notes consistent across `README.md` and `README.pt-BR.md` when they change.
+Do not record completed implementation work in `ROADMAP.md`, and do not use `IMPLEMENTATION.md` as a backlog for future work.
 
 ## Implementation Defaults / Defaults de Implementacao
 

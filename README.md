@@ -62,6 +62,8 @@ The structure below is planned, not implemented yet.
 
 ## Roadmap Snapshot
 
+For the detailed roadmap, see [`ROADMAP.md`](./ROADMAP.md).
+
 - MVP: single board, 3 columns, drag and drop, SQLite persistence, always-on-top
 - Phase 2: multiple boards, Google Drive sync, system tray, themes
 - Future: custom fields, notifications, advanced conflict resolution, mobile companion
@@ -70,6 +72,8 @@ The structure below is planned, not implemented yet.
 
 - [`README.pt-BR.md`](./README.pt-BR.md): Brazilian Portuguese version of this README
 - [`SPEC.md`](./SPEC.md): product specification
+- [`ROADMAP.md`](./ROADMAP.md): planned milestones and future priorities
+- [`IMPLEMENTATION.md`](./IMPLEMENTATION.md): current repository state and delivered milestones
 - [`AGENTS.md`](./AGENTS.md): operating guidance for programming agents
 - [`DECISIONS.md`](./DECISIONS.md): architecture decision log
 
@@ -84,6 +88,7 @@ This repository may contain code, documentation, and project structure created o
 ## Getting Started Today
 
 There is no runnable application scaffold yet. The current next step is to turn the product specification into the initial Electron/React/TypeScript project structure.
+The current repository state is tracked in [`IMPLEMENTATION.md`](./IMPLEMENTATION.md).
 
 ## License
 
