@@ -38,6 +38,7 @@ jobs:
       - name: Ensure release exists
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ needs.version.outputs.tag }}
           VERSION: ${{ needs.version.outputs.version }}
           BUMP: ${{ needs.version.outputs.bump }}
@@ -80,6 +81,7 @@ jobs:
       - name: Upload Linux release artifacts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ needs.version.outputs.tag }}
         run: |
           shopt -s nullglob
@@ -119,6 +121,7 @@ jobs:
       - name: Upload Windows release artifacts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ needs.version.outputs.tag }}
         shell: pwsh
         run: |
