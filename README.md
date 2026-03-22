@@ -1,24 +1,20 @@
 # Stickban
 
-**EN:** A sticky Kanban board that lives on your desktop.  
-**PT-BR:** Um quadro Kanban persistente que fica visível na sua área de trabalho.
+A sticky Kanban board that lives on your desktop.
 
-## Overview / Visao Geral
+For Brazilian Portuguese, see [`README.pt-BR.md`](./README.pt-BR.md).
 
-**EN:** Stickban is a desktop Kanban application focused on speed, low friction, and constant visibility. The product direction is offline-first, with local persistence as the primary data source and optional cloud synchronization across devices.  
-**PT-BR:** Stickban e um aplicativo desktop de Kanban focado em velocidade, baixo atrito e visibilidade constante. A direcao do produto e offline-first, com persistencia local como fonte primaria de dados e sincronizacao opcional em nuvem entre dispositivos.
+## Overview
 
-## Current Status / Estado Atual
+Stickban is a desktop Kanban application focused on speed, low friction, and constant visibility. The product direction is offline-first, with local persistence as the primary data source and optional cloud synchronization across devices.
 
-**EN:** This repository is in bootstrap stage. The product specification exists in [`SPEC.md`](./SPEC.md), but the application scaffold has not been created yet.  
-**PT-BR:** Este repositorio esta em fase de bootstrap. A especificacao do produto existe em [`SPEC.md`](./SPEC.md), mas o scaffold da aplicacao ainda nao foi criado.
+## Current Status
 
-**EN:** The documentation in this repository is intended to establish direction before implementation starts.  
-**PT-BR:** A documentacao deste repositorio serve para estabelecer direcao antes do inicio da implementacao.
+This repository is in bootstrap stage. The product specification exists in [`SPEC.md`](./SPEC.md), but the application scaffold has not been created yet.
 
-## Product Direction / Direcao do Produto
+The documentation in this repository is intended to establish direction before implementation starts.
 
-**EN**
+## Product Direction
 
 - Desktop-first Kanban workflow
 - Sticky widget behavior, with optional always-on-top mode
@@ -27,18 +23,7 @@
 - Local SQLite persistence
 - Optional Google Drive synchronization
 
-**PT-BR**
-
-- Fluxo de Kanban orientado a desktop
-- Comportamento de widget fixo, com modo always-on-top opcional
-- Experiencia leve e rapida
-- Arquitetura offline-first
-- Persistencia local em SQLite
-- Sincronizacao opcional com Google Drive
-
-## Planned Technology Stack / Stack Planejada
-
-**EN**
+## Planned Technology Stack
 
 - Electron
 - React + TypeScript
@@ -47,18 +32,7 @@
 - Tailwind CSS
 - `dnd-kit` for drag and drop
 
-**PT-BR**
-
-- Electron
-- React + TypeScript
-- SQLite via `better-sqlite3`
-- Zustand para gerenciamento de estado
-- Tailwind CSS
-- `dnd-kit` para drag and drop
-
-## Core Principles / Principios Centrais
-
-**EN**
+## Core Principles
 
 - Local data is the source of truth
 - UI interactions should stay responsive
@@ -67,19 +41,9 @@
 - AI-assisted development is the default workflow, with manual edits allowed when appropriate
 - Architectural changes should remain aligned with [`SPEC.md`](./SPEC.md) and [`DECISIONS.md`](./DECISIONS.md)
 
-**PT-BR**
+## Planned Project Structure
 
-- Dados locais sao a fonte de verdade
-- Interacoes da interface devem permanecer responsivas
-- A sincronizacao nao deve bloquear a interface
-- Dados locais nao podem ser perdidos por falhas de sincronizacao
-- Desenvolvimento assistido por IA e o fluxo padrao, com edicoes manuais permitidas quando fizer sentido
-- Mudancas arquiteturais devem permanecer alinhadas com [`SPEC.md`](./SPEC.md) e [`DECISIONS.md`](./DECISIONS.md)
-
-## Planned Project Structure / Estrutura Planejada do Projeto
-
-**EN:** The structure below is planned, not implemented yet.  
-**PT-BR:** A estrutura abaixo esta planejada, mas ainda nao foi implementada.
+The structure below is planned, not implemented yet.
 
 ```text
 /app
@@ -96,41 +60,31 @@
   /utils
 ```
 
-## Roadmap Snapshot / Resumo do Roadmap
-
-**EN**
+## Roadmap Snapshot
 
 - MVP: single board, 3 columns, drag and drop, SQLite persistence, always-on-top
 - Phase 2: multiple boards, Google Drive sync, system tray, themes
 - Future: custom fields, notifications, advanced conflict resolution, mobile companion
 
-**PT-BR**
+## Repository Documents
 
-- MVP: quadro unico, 3 colunas, drag and drop, persistencia em SQLite, always-on-top
-- Fase 2: multiplos quadros, sync com Google Drive, system tray, temas
-- Futuro: campos customizados, notificacoes, resolucao avancada de conflitos, app mobile complementar
+- [`README.pt-BR.md`](./README.pt-BR.md): Brazilian Portuguese version of this README
+- [`SPEC.md`](./SPEC.md): product specification
+- [`AGENTS.md`](./AGENTS.md): operating guidance for programming agents
+- [`DECISIONS.md`](./DECISIONS.md): architecture decision log
 
-## Repository Documents / Documentos do Repositorio
+## AI-Assisted Development
 
-- [`SPEC.md`](./SPEC.md): product specification / especificacao do produto
-- [`AGENTS.md`](./AGENTS.md): operating guidance for programming agents / guia operacional para agentes de programacao
-- [`DECISIONS.md`](./DECISIONS.md): architecture decision log / registro de decisoes arquiteturais
+Stickban was conceived from the start as a project developed with AI-assisted tooling, including tools such as Codex, Claude, Antigravity, and similar systems. The preferred maintenance model for this repository is to keep using AI-capable development tools as the primary workflow, while still allowing direct manual edits when they are the better fit for a task.
 
-## AI-Assisted Development / Desenvolvimento Assistido por IA
+## Transparency Note
 
-**EN:** Stickban was conceived from the start as a project developed with AI-assisted tooling, including tools such as Codex, Claude, Antigravity, and similar systems. The preferred maintenance model for this repository is to keep using AI-capable development tools as the primary workflow, while still allowing direct manual edits when they are the better fit for a task.  
-**PT-BR:** O Stickban foi concebido desde o inicio como um projeto desenvolvido com ferramentas assistidas por IA, incluindo ferramentas como Codex, Claude, Antigravity e sistemas equivalentes. O modelo preferencial de manutencao deste repositorio e continuar usando ferramentas de desenvolvimento com IA como fluxo principal, sem impedir edicoes manuais diretas quando elas forem a melhor opcao para uma tarefa.
+This repository may contain code, documentation, and project structure created or refined with AI assistance and human review. AI assistance does not remove the need for technical validation. The project does not provide any warranty beyond the terms already stated in [`LICENSE`](./LICENSE), and independent review remains advisable for commercial, regulated, or higher-risk use cases.
 
-## Transparency Note / Nota de Transparencia
+## Getting Started Today
 
-**EN:** This repository may contain code, documentation, and project structure created or refined with AI assistance and human review. AI assistance does not remove the need for technical validation. The project does not provide any warranty beyond the terms already stated in [`LICENSE`](./LICENSE), and independent review remains advisable for commercial, regulated, or higher-risk use cases.  
-**PT-BR:** Este repositorio pode conter codigo, documentacao e estrutura de projeto criados ou refinados com assistencia de IA e revisao humana. O uso de IA nao elimina a necessidade de validacao tecnica. O projeto nao oferece qualquer garantia adicional alem dos termos ja definidos em [`LICENSE`](./LICENSE), e a revisao independente continua recomendavel para usos comerciais, regulados ou de maior risco.
+There is no runnable application scaffold yet. The current next step is to turn the product specification into the initial Electron/React/TypeScript project structure.
 
-## Getting Started Today / Como Comecar Hoje
-
-**EN:** There is no runnable application scaffold yet. The current next step is to turn the product specification into the initial Electron/React/TypeScript project structure.  
-**PT-BR:** Ainda nao existe um scaffold executavel da aplicacao. O proximo passo atual e transformar a especificacao do produto na estrutura inicial do projeto com Electron/React/TypeScript.
-
-## License / Licenca
+## License
 
 This repository includes an MIT license in [`LICENSE`](./LICENSE).
