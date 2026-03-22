@@ -43,6 +43,7 @@ Agents should stay aligned with these project-level decisions:
 - Google Drive AppDataFolder as sync provider
 - Snapshot-based sync for MVP
 - Last-write-wins conflict resolution for MVP
+- AI-assisted development by default, with manual edits allowed when appropriate
 
 ## Agent Operating Rules / Regras Operacionais para Agentes
 
@@ -71,12 +72,19 @@ Agents should stay aligned with these project-level decisions:
 8. Update Markdown documentation as part of every relevant delivery.
    If a change affects workflow, architecture, setup, scope, or repository conventions, update the affected `.md` files in the same delivery.
 
+9. Preserve the repository's AI-first development model.
+   Prefer implementation and maintenance through compatible AI-assisted tools and agents when possible, while allowing manual code edits as a complementary path when they are the better fit.
+
+10. Treat AI output as material that still requires technical validation.
+    Expected use of AI does not remove the need to review correctness, safety, maintainability, and repository alignment.
+
 ## Documentation Expectations / Expectativas de Documentacao
 
 **EN:** Public-facing repository guidance belongs in `README.md`. Agent-specific rules belong in `AGENTS.md`. Architectural intent and changes belong in `DECISIONS.md`.  
 **PT-BR:** Orientacoes publicas do repositorio pertencem ao `README.md`. Regras especificas para agentes pertencem ao `AGENTS.md`. Intencao arquitetural e mudancas relevantes pertencem ao `DECISIONS.md`.
 
 Avoid copying large sections from `SPEC.md`. Prefer linking back to the spec and summarizing only what is necessary.
+Keep AI workflow policy and public transparency notes consistent with `README.md` when they change.
 
 ## Implementation Defaults / Defaults de Implementacao
 
@@ -87,6 +95,7 @@ Unless the repository later defines a different rule:
 - Avoid blocking the UI during sync work
 - Protect local data from remote sync failures
 - Keep naming and module boundaries consistent with the planned app/main/renderer split
+- Assume AI-assisted implementation is the preferred delivery path unless the user explicitly requests otherwise
 
 ## Git Workflow Policy / Politica de Workflow Git
 

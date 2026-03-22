@@ -64,6 +64,7 @@
 - UI interactions should stay responsive
 - Sync must not block the interface
 - Local data must not be lost because of sync failures
+- AI-assisted development is the default workflow, with manual edits allowed when appropriate
 - Architectural changes should remain aligned with [`SPEC.md`](./SPEC.md) and [`DECISIONS.md`](./DECISIONS.md)
 
 **PT-BR**
@@ -72,6 +73,7 @@
 - Interacoes da interface devem permanecer responsivas
 - A sincronizacao nao deve bloquear a interface
 - Dados locais nao podem ser perdidos por falhas de sincronizacao
+- Desenvolvimento assistido por IA e o fluxo padrao, com edicoes manuais permitidas quando fizer sentido
 - Mudancas arquiteturais devem permanecer alinhadas com [`SPEC.md`](./SPEC.md) e [`DECISIONS.md`](./DECISIONS.md)
 
 ## Planned Project Structure / Estrutura Planejada do Projeto
@@ -113,6 +115,16 @@
 - [`SPEC.md`](./SPEC.md): product specification / especificacao do produto
 - [`AGENTS.md`](./AGENTS.md): operating guidance for programming agents / guia operacional para agentes de programacao
 - [`DECISIONS.md`](./DECISIONS.md): architecture decision log / registro de decisoes arquiteturais
+
+## AI-Assisted Development / Desenvolvimento Assistido por IA
+
+**EN:** Stickban was conceived from the start as a project developed with AI-assisted tooling, including tools such as Codex, Claude, Antigravity, and similar systems. The preferred maintenance model for this repository is to keep using AI-capable development tools as the primary workflow, while still allowing direct manual edits when they are the better fit for a task.  
+**PT-BR:** O Stickban foi concebido desde o inicio como um projeto desenvolvido com ferramentas assistidas por IA, incluindo ferramentas como Codex, Claude, Antigravity e sistemas equivalentes. O modelo preferencial de manutencao deste repositorio e continuar usando ferramentas de desenvolvimento com IA como fluxo principal, sem impedir edicoes manuais diretas quando elas forem a melhor opcao para uma tarefa.
+
+## Transparency Note / Nota de Transparencia
+
+**EN:** This repository may contain code, documentation, and project structure created or refined with AI assistance and human review. AI assistance does not remove the need for technical validation. The project does not provide any warranty beyond the terms already stated in [`LICENSE`](./LICENSE), and independent review remains advisable for commercial, regulated, or higher-risk use cases.  
+**PT-BR:** Este repositorio pode conter codigo, documentacao e estrutura de projeto criados ou refinados com assistencia de IA e revisao humana. O uso de IA nao elimina a necessidade de validacao tecnica. O projeto nao oferece qualquer garantia adicional alem dos termos ja definidos em [`LICENSE`](./LICENSE), e a revisao independente continua recomendavel para usos comerciais, regulados ou de maior risco.
 
 ## Getting Started Today / Como Comecar Hoje
 

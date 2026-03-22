@@ -106,6 +106,20 @@
   Conflict handling stays simple in early versions, but edge cases may later justify a stronger model.
   O tratamento de conflitos permanece simples nas versoes iniciais, mas casos limite podem justificar um modelo mais robusto no futuro.
 
+## D-008: AI-Assisted Development Default
+
+- Date / Data: 2026-03-22
+- Status: accepted
+- Context / Contexto:
+  The repository was conceived from the start to be developed with AI-assisted tools, and the maintainer prefers to preserve that workflow as the default operating model.
+  O repositorio foi concebido desde o inicio para ser desenvolvido com ferramentas assistidas por IA, e o mantenedor prefere preservar esse fluxo como modelo operacional padrao.
+- Decision / Decisao:
+  Adopt AI-assisted development by default, using tools such as Codex, Claude, Antigravity, and equivalent systems as the preferred implementation path, while allowing manual code changes when they are the better fit for a task.
+  Adotar desenvolvimento assistido por IA como padrao, usando ferramentas como Codex, Claude, Antigravity e sistemas equivalentes como caminho preferencial de implementacao, permitindo alteracoes manuais no codigo quando elas forem a melhor opcao para uma tarefa.
+- Consequences / Consequencias:
+  Repository documentation and workflow guidance should remain agent-friendly, and changes to process, governance, or collaboration expectations should keep this AI-first model explicit.
+  A documentacao do repositorio e as orientacoes de workflow devem continuar amigaveis para agentes, e mudancas de processo, governanca ou expectativas de colaboracao devem manter esse modelo AI-first explicito.
+
 ## Notes / Notas
 
 **EN:** Entries marked as `planned` reflect current intended direction from the specification and should be validated during implementation.  
