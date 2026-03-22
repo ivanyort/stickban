@@ -68,6 +68,9 @@ Agents should stay aligned with these project-level decisions:
    Update [`README.md`](./README.md) when public-facing setup or project status changes.
    Update [`DECISIONS.md`](./DECISIONS.md) when architecture or implementation direction changes materially.
 
+8. Update Markdown documentation as part of every relevant delivery.
+   If a change affects workflow, architecture, setup, scope, or repository conventions, update the affected `.md` files in the same delivery.
+
 ## Documentation Expectations / Expectativas de Documentacao
 
 **EN:** Public-facing repository guidance belongs in `README.md`. Agent-specific rules belong in `AGENTS.md`. Architectural intent and changes belong in `DECISIONS.md`.  
@@ -114,6 +117,11 @@ All programming agents working in this repository must follow these Git rules:
 
 **EN:** If an agent makes a repository change, the default expectation is: stage the full task diff, create a conventional detailed commit using a temporary message file, and push immediately.  
 **PT-BR:** Se um agente fizer uma mudanca no repositorio, a expectativa padrao e: adicionar todo o diff da tarefa, criar um commit convencional detalhado usando arquivo temporario de mensagem e fazer push imediatamente.
+
+## Line Ending Policy / Politica de Finais de Linha
+
+**EN:** The repository should normalize text files with LF in Git to reduce Windows, WSL, and Linux interoperability issues. Use [`.gitattributes`](./.gitattributes) as the source of truth for line ending behavior.  
+**PT-BR:** O repositorio deve normalizar arquivos de texto com LF no Git para reduzir problemas de interoperabilidade entre Windows, WSL e Linux. Use [`.gitattributes`](./.gitattributes) como fonte de verdade para o comportamento de finais de linha.
 
 ## When to Update This File / Quando Atualizar Este Arquivo
 
