@@ -12,6 +12,7 @@ This document tracks the real implementation state of the repository and the hig
 - Public project documentation exists in [`README.md`](./README.md) and [`README.pt-BR.md`](./README.pt-BR.md).
 - Product specification exists in [`SPEC.md`](./SPEC.md).
 - Architecture and workflow guidance exists in [`DECISIONS.md`](./DECISIONS.md) and [`AGENTS.md`](./AGENTS.md).
+- The first implementation milestone is defined as local-only, without Google sync, OAuth, or external infrastructure.
 
 ## Implemented Milestones
 
@@ -25,6 +26,7 @@ This document tracks the real implementation state of the repository and the hig
 
 - No active application implementation is currently recorded in the repository
 - The next implementation milestone is the initial Electron/React/TypeScript scaffold
+- The initial scaffold should be usable without subscriptions, paid services, or cloud dependencies
 
 ## Not Implemented Yet
 
@@ -40,3 +42,4 @@ This document tracks the real implementation state of the repository and the hig
 - This file records actual repository state and completed milestones.
 - Future goals and planning belong in [`ROADMAP.md`](./ROADMAP.md).
 - Architectural decisions belong in [`DECISIONS.md`](./DECISIONS.md).
+- Remote sync remains intentionally outside the first implementation milestone.

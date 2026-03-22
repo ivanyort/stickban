@@ -13,6 +13,7 @@ Stickban e um aplicativo desktop de Kanban focado em velocidade, baixo atrito e 
 Este repositorio esta em fase de bootstrap. A especificacao do produto existe em [`SPEC.md`](./SPEC.md), mas o scaffold da aplicacao ainda nao foi criado.
 
 A documentacao deste repositorio serve para estabelecer direcao antes do inicio da implementacao.
+O primeiro milestone tecnico sera local-first e nao inclui sync remoto, OAuth ou infraestrutura externa.
 
 ## Direcao do Produto
 
@@ -31,6 +32,13 @@ A documentacao deste repositorio serve para estabelecer direcao antes do inicio 
 - Zustand para gerenciamento de estado
 - Tailwind CSS
 - `dnd-kit` para drag and drop
+
+## Recorte Inicial de Implementacao
+
+- Manter o stack desktop local: Electron, React + TypeScript, `better-sqlite3`, Zustand, Tailwind CSS e `dnd-kit`
+- Deixar Google Drive sync, OAuth e infraestrutura remota fora do primeiro scaffold
+- Focar o primeiro milestone em quadro local unico, 3 colunas, drag and drop, persistencia em SQLite e always-on-top
+- Tratar sync como capability posterior, nao como requisito do bootstrap
 
 ## Principios Centrais
 
@@ -89,6 +97,7 @@ Este repositorio pode conter codigo, documentacao e estrutura de projeto criados
 
 Ainda nao existe um scaffold executavel da aplicacao. O proximo passo atual e transformar a especificacao do produto na estrutura inicial do projeto com Electron/React/TypeScript.
 O estado atual do repositorio esta documentado em [`IMPLEMENTATION.md`](./IMPLEMENTATION.md).
+Espera-se que o scaffold inicial funcione sem servicos pagos, assinaturas, infraestrutura cloud ou integracao com Google.
 
 ## Licenca
 

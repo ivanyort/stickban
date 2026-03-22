@@ -72,11 +72,11 @@
   The product specification calls for optional sync across devices without making cloud storage the primary system of record.
   A especificacao do produto pede sincronizacao opcional entre dispositivos sem transformar a nuvem no sistema primario de registro.
 - Decision / Decisao:
-  Use Google Drive AppDataFolder as the sync provider for the MVP direction.
-  Usar Google Drive AppDataFolder como provedor de sincronizacao na direcao atual do MVP.
+  Use Google Drive AppDataFolder as the planned sync provider for a later phase, not for the initial local-first scaffold.
+  Usar Google Drive AppDataFolder como provedor planejado de sincronizacao para uma fase posterior, nao para o scaffold inicial local-first.
 - Consequences / Consequencias:
-  Auth, background sync, and remote file lifecycle must be designed around Google Drive capabilities.
-  Autenticacao, sincronizacao em background e ciclo de vida de arquivos remotos devem ser desenhados em torno das capacidades do Google Drive.
+  Auth, background sync, and remote file lifecycle can be deferred until after the first local milestone is stable.
+  Autenticacao, sincronizacao em background e ciclo de vida de arquivos remotos podem ser adiados ate que o primeiro milestone local esteja estavel.
 
 ## D-006: Sync Strategy
 
@@ -86,8 +86,8 @@
   The project needs a simple first implementation path for synchronization.
   O projeto precisa de um primeiro caminho simples para implementacao da sincronizacao.
 - Decision / Decisao:
-  Adopt snapshot-based synchronization for the MVP.
-  Adotar sincronizacao baseada em snapshot para o MVP.
+  Adopt snapshot-based synchronization when remote sync is introduced, not in the initial scaffold.
+  Adotar sincronizacao baseada em snapshot quando o sync remoto for introduzido, nao no scaffold inicial.
 - Consequences / Consequencias:
   Sync logic can start simpler, but future evolution may require more advanced merge behavior.
   A logica de sync pode comecar mais simples, mas evolucoes futuras podem exigir merge mais avancado.
@@ -100,8 +100,8 @@
   The MVP needs a deterministic conflict policy that is cheap to implement.
   O MVP precisa de uma politica deterministica de conflitos que seja barata de implementar.
 - Decision / Decisao:
-  Use last-write-wins as the initial conflict resolution strategy.
-  Usar last-write-wins como estrategia inicial de resolucao de conflitos.
+  Use last-write-wins as the initial remote conflict resolution strategy when sync is added later.
+  Usar last-write-wins como estrategia inicial de resolucao de conflitos remotos quando o sync for adicionado depois.
 - Consequences / Consequencias:
   Conflict handling stays simple in early versions, but edge cases may later justify a stronger model.
   O tratamento de conflitos permanece simples nas versoes iniciais, mas casos limite podem justificar um modelo mais robusto no futuro.
@@ -119,6 +119,20 @@
 - Consequences / Consequencias:
   Repository documentation and workflow guidance should remain agent-friendly, and changes to process, governance, or collaboration expectations should keep this AI-first model explicit.
   A documentacao do repositorio e as orientacoes de workflow devem continuar amigaveis para agentes, e mudancas de processo, governanca ou expectativas de colaboracao devem manter esse modelo AI-first explicito.
+
+## D-009: Initial Scaffold Scope
+
+- Date / Data: 2026-03-22
+- Status: accepted
+- Context / Contexto:
+  The project should be implementable locally without paid services, subscriptions, cloud infrastructure, or unnecessary early complexity.
+  O projeto deve ser implementavel localmente sem servicos pagos, assinaturas, infraestrutura cloud ou complexidade prematura desnecessaria.
+- Decision / Decisao:
+  Keep the initial scaffold focused on Electron, React + TypeScript, local SQLite via `better-sqlite3`, Zustand, Tailwind CSS, and `dnd-kit`, with a single local board, three columns, drag and drop, SQLite persistence, and always-on-top behavior. Exclude Google Drive sync, OAuth, and remote infrastructure from the first milestone.
+  Manter o scaffold inicial focado em Electron, React + TypeScript, SQLite local via `better-sqlite3`, Zustand, Tailwind CSS e `dnd-kit`, com um quadro local unico, tres colunas, drag and drop, persistencia em SQLite e comportamento always-on-top. Deixar Google Drive sync, OAuth e infraestrutura remota fora do primeiro milestone.
+- Consequences / Consequencias:
+  The first implementation milestone remains local-only and cost-free to develop and run, while remote synchronization stays as a later phase capability.
+  O primeiro milestone de implementacao permanece apenas local e sem custo para desenvolver e executar, enquanto a sincronizacao remota permanece como capability de fase posterior.
 
 ## Notes / Notas
 

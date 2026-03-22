@@ -24,6 +24,12 @@ Goals and milestones:
 - Always-on-top support
 - Initial Electron + React + TypeScript application scaffold
 
+Implementation constraints for this phase:
+
+- No Google Drive sync
+- No OAuth
+- No external infrastructure or paid services
+
 ## Phase 2
 
 Status: `planned`
@@ -51,3 +57,4 @@ Goals and milestones:
 - This file tracks future direction and active priorities.
 - Detailed architectural choices belong in [`DECISIONS.md`](./DECISIONS.md).
 - Current repository reality and completed milestones belong in [`IMPLEMENTATION.md`](./IMPLEMENTATION.md).
+- Remote sync belongs to a later phase and is not part of the initial scaffold milestone.

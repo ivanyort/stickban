@@ -41,9 +41,10 @@ Agents should stay aligned with these project-level decisions:
 - Offline-first architecture
 - Local SQLite database as source of truth
 - Google Drive AppDataFolder as sync provider
-- Snapshot-based sync for MVP
-- Last-write-wins conflict resolution for MVP
+- Snapshot-based sync when remote sync is introduced
+- Last-write-wins conflict resolution when remote sync is introduced
 - AI-assisted development by default, with manual edits allowed when appropriate
+- Initial scaffold must remain local-first and exclude Google sync, OAuth, and external infrastructure
 
 ## Agent Operating Rules / Regras Operacionais para Agentes
 
@@ -56,29 +57,32 @@ Agents should stay aligned with these project-level decisions:
 3. Treat SQLite as the authoritative local store.
    Do not redesign persistence around remote-first assumptions.
 
-4. Do not introduce sync behavior that contradicts the current MVP direction.
+4. Do not introduce sync behavior that contradicts the documented remote sync direction.
    If a change would alter snapshot sync or last-write-wins semantics, record it in [`DECISIONS.md`](./DECISIONS.md) as part of the same work.
 
-5. Prefer small, traceable changes.
+5. Keep the initial implementation scope intentionally narrow.
+   Do not add Google Drive sync, OAuth, remote APIs, paid services, or cloud dependencies to the first scaffold unless the documented project direction changes.
+
+6. Prefer small, traceable changes.
    Keep diffs narrow and document meaningful architectural changes.
 
-6. Record assumptions explicitly.
+7. Record assumptions explicitly.
    When code or infrastructure does not exist yet, note assumptions in documentation, task output, or decision records rather than silently filling gaps.
 
-7. Keep documentation synchronized with reality.
+8. Keep documentation synchronized with reality.
    Update [`README.md`](./README.md) when public-facing setup or project status changes.
    Update [`README.pt-BR.md`](./README.pt-BR.md) when the Portuguese public-facing guidance changes.
    Update [`ROADMAP.md`](./ROADMAP.md) when priorities or future direction change.
    Update [`IMPLEMENTATION.md`](./IMPLEMENTATION.md) when a relevant delivery changes the actual repository state.
    Update [`DECISIONS.md`](./DECISIONS.md) when architecture or implementation direction changes materially.
 
-8. Update Markdown documentation as part of every relevant delivery.
+9. Update Markdown documentation as part of every relevant delivery.
    If a change affects workflow, architecture, setup, scope, or repository conventions, update the affected `.md` files in the same delivery.
 
-9. Preserve the repository's AI-first development model.
+10. Preserve the repository's AI-first development model.
    Prefer implementation and maintenance through compatible AI-assisted tools and agents when possible, while allowing manual code edits as a complementary path when they are the better fit.
 
-10. Treat AI output as material that still requires technical validation.
+11. Treat AI output as material that still requires technical validation.
     Expected use of AI does not remove the need to review correctness, safety, maintainability, and repository alignment.
 
 ## Documentation Expectations / Expectativas de Documentacao
@@ -89,6 +93,7 @@ Agents should stay aligned with these project-level decisions:
 Avoid copying large sections from `SPEC.md`. Prefer linking back to the spec and summarizing only what is necessary.
 Keep AI workflow policy and public transparency notes consistent across `README.md` and `README.pt-BR.md` when they change.
 Do not record completed implementation work in `ROADMAP.md`, and do not use `IMPLEMENTATION.md` as a backlog for future work.
+Do not introduce paid dependencies or cloud requirements into the initial scaffold unless the repository decisions are updated first.
 
 ## Implementation Defaults / Defaults de Implementacao
 
@@ -100,6 +105,7 @@ Unless the repository later defines a different rule:
 - Protect local data from remote sync failures
 - Keep naming and module boundaries consistent with the planned app/main/renderer split
 - Assume AI-assisted implementation is the preferred delivery path unless the user explicitly requests otherwise
+- Assume the first working milestone must run fully locally without Google integration
 
 ## Git Workflow Policy / Politica de Workflow Git
 
