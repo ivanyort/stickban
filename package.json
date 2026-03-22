@@ -1,0 +1,49 @@
+{
+  "name": "stickban",
+  "productName": "Stickban",
+  "version": "0.1.0",
+  "description": "A sticky Kanban board that lives on your desktop.",
+  "main": "out/main/index.js",
+  "author": "Ivan Yort <ivan.yort@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "dev:root": "npm run build && electron --no-sandbox out/main/index.js",
+    "start": "electron-vite preview",
+    "start:root": "electron --no-sandbox out/main/index.js",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck && electron-vite build",
+    "dist": "npm run build && electron-builder --publish never",
+    "dist:linux": "npm run build && electron-builder --linux AppImage tar.gz --publish never",
+    "dist:win": "npm run build && electron-builder --win nsis portable --publish never",
+    "dist:linux:ci": "npm run build && electron-builder --linux AppImage tar.gz --publish never",
+    "dist:win:ci": "npm run build && electron-builder --win nsis portable --publish never",
+    "release:version": "node scripts/release/next-version.mjs",
+    "release:set-version": "node scripts/release/set-package-version.mjs",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "better-sqlite3": "^9.6.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.6"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^20.17.24",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3",
+    "electron-vite": "1.0.29",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3",
+    "vite": "^4.5.9"
+  }
+}

@@ -1,0 +1,21 @@
+appId: com.ivanyort.stickban
+productName: Stickban
+asar: true
+directories:
+  output: dist
+files:
+  - out/**
+  - package.json
+linux:
+  target:
+    - AppImage
+    - tar.gz
+win:
+  target:
+    - nsis
+    - portable
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+artifactName: ${productName}-${version}-${os}-${arch}.${ext}

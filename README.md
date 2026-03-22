@@ -10,10 +10,11 @@ Stickban is a desktop Kanban application focused on speed, low friction, and con
 
 ## Current Status
 
-This repository is in bootstrap stage. The product specification exists in [`SPEC.md`](./SPEC.md), but the application scaffold has not been created yet.
+This repository is in bootstrap stage. The product specification exists in [`SPEC.md`](./SPEC.md), and the first runnable application scaffold is now in place.
 
 The documentation in this repository is intended to establish direction before implementation starts.
 The initial technical milestone is local-first and does not include remote sync, OAuth, or external infrastructure.
+The first runnable milestone already covers a single local board, SQLite persistence, drag and drop, and always-on-top behavior.
 
 ## Product Direction
 
@@ -39,6 +40,39 @@ The initial technical milestone is local-first and does not include remote sync,
 - Exclude Google Drive sync, OAuth, and remote infrastructure from the first scaffold
 - Focus the first milestone on a single local board, 3 columns, drag and drop, SQLite persistence, and always-on-top behavior
 - Treat sync as a later capability, not as a bootstrap requirement
+
+## Local Development
+
+Prerequisites:
+
+- Node.js 18+ recommended
+- npm
+
+Commands:
+
+```bash
+npm install
+npm run dev
+```
+
+If you are running as `root` in WSL/Linux, use:
+
+```bash
+npm run dev:root
+```
+
+Production build:
+
+```bash
+npm run build
+npm run dist
+```
+
+To launch the built app as `root`:
+
+```bash
+npm run start:root
+```
 
 ## Core Principles
 
@@ -85,6 +119,13 @@ For the detailed roadmap, see [`ROADMAP.md`](./ROADMAP.md).
 - [`AGENTS.md`](./AGENTS.md): operating guidance for programming agents
 - [`DECISIONS.md`](./DECISIONS.md): architecture decision log
 
+## Releases
+
+- Every push to `main` is intended to generate an automatic GitHub Release
+- The release version is calculated from commit conventions since the latest SemVer tag
+- `feat` bumps minor, `fix` and operational commit types bump patch, and `BREAKING CHANGE` or `type!` bumps major
+- Release artifacts are produced for Windows and Linux
+
 ## AI-Assisted Development
 
 Stickban was conceived from the start as a project developed with AI-assisted tooling, including tools such as Codex, Claude, Antigravity, and similar systems. The preferred maintenance model for this repository is to keep using AI-capable development tools as the primary workflow, while still allowing direct manual edits when they are the better fit for a task.
@@ -95,7 +136,7 @@ This repository may contain code, documentation, and project structure created o
 
 ## Getting Started Today
 
-There is no runnable application scaffold yet. The current next step is to turn the product specification into the initial Electron/React/TypeScript project structure.
+The repository now contains a runnable local-first Electron/React/TypeScript scaffold for the first milestone.
 The current repository state is tracked in [`IMPLEMENTATION.md`](./IMPLEMENTATION.md).
 The initial scaffold is expected to work without paid services, subscriptions, cloud infrastructure, or Google integration.
 

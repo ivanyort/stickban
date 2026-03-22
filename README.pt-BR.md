@@ -10,10 +10,11 @@ Stickban e um aplicativo desktop de Kanban focado em velocidade, baixo atrito e 
 
 ## Estado Atual
 
-Este repositorio esta em fase de bootstrap. A especificacao do produto existe em [`SPEC.md`](./SPEC.md), mas o scaffold da aplicacao ainda nao foi criado.
+Este repositorio esta em fase de bootstrap. A especificacao do produto existe em [`SPEC.md`](./SPEC.md), e o primeiro scaffold executavel da aplicacao agora ja existe.
 
 A documentacao deste repositorio serve para estabelecer direcao antes do inicio da implementacao.
 O primeiro milestone tecnico sera local-first e nao inclui sync remoto, OAuth ou infraestrutura externa.
+O primeiro milestone executavel ja cobre quadro local unico, persistencia em SQLite, drag and drop e always-on-top.
 
 ## Direcao do Produto
 
@@ -39,6 +40,39 @@ O primeiro milestone tecnico sera local-first e nao inclui sync remoto, OAuth ou
 - Deixar Google Drive sync, OAuth e infraestrutura remota fora do primeiro scaffold
 - Focar o primeiro milestone em quadro local unico, 3 colunas, drag and drop, persistencia em SQLite e always-on-top
 - Tratar sync como capability posterior, nao como requisito do bootstrap
+
+## Desenvolvimento Local
+
+Pre-requisitos:
+
+- Node.js 18+ recomendado
+- npm
+
+Comandos:
+
+```bash
+npm install
+npm run dev
+```
+
+Se voce estiver rodando como `root` em WSL/Linux, use:
+
+```bash
+npm run dev:root
+```
+
+Build de producao:
+
+```bash
+npm run build
+npm run dist
+```
+
+Para abrir o app buildado como `root`:
+
+```bash
+npm run start:root
+```
 
 ## Principios Centrais
 
@@ -85,6 +119,13 @@ Para o roadmap detalhado, veja [`ROADMAP.md`](./ROADMAP.md).
 - [`AGENTS.md`](./AGENTS.md): guia operacional para agentes de programacao
 - [`DECISIONS.md`](./DECISIONS.md): registro de decisoes arquiteturais
 
+## Releases
+
+- Cada push para `main` deve gerar uma GitHub Release automatica
+- A versao da release e calculada a partir das commit conventions desde a ultima tag SemVer
+- `feat` sobe minor, `fix` e tipos operacionais sobem patch, e `BREAKING CHANGE` ou `type!` sobem major
+- Artefatos de release sao gerados para Windows e Linux
+
 ## Desenvolvimento Assistido por IA
 
 O Stickban foi concebido desde o inicio como um projeto desenvolvido com ferramentas assistidas por IA, incluindo ferramentas como Codex, Claude, Antigravity e sistemas equivalentes. O modelo preferencial de manutencao deste repositorio e continuar usando ferramentas de desenvolvimento com IA como fluxo principal, sem impedir edicoes manuais diretas quando elas forem a melhor opcao para uma tarefa.
@@ -95,7 +136,7 @@ Este repositorio pode conter codigo, documentacao e estrutura de projeto criados
 
 ## Como Comecar Hoje
 
-Ainda nao existe um scaffold executavel da aplicacao. O proximo passo atual e transformar a especificacao do produto na estrutura inicial do projeto com Electron/React/TypeScript.
+O repositorio agora contem um scaffold executavel local-first em Electron/React/TypeScript para o primeiro milestone.
 O estado atual do repositorio esta documentado em [`IMPLEMENTATION.md`](./IMPLEMENTATION.md).
 Espera-se que o scaffold inicial funcione sem servicos pagos, assinaturas, infraestrutura cloud ou integracao com Google.
 

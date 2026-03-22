@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      base_version: ${{ steps.version.outputs.base_version }}
+      bump: ${{ steps.version.outputs.bump }}
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Calculate next version
+        id: version
+        run: node scripts/release/next-version.mjs
+
+  release:
+    runs-on: ubuntu-latest
+    needs: version
+    steps:
+      - name: Ensure release exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.version.outputs.tag }}
+          VERSION: ${{ needs.version.outputs.version }}
+          BUMP: ${{ needs.version.outputs.bump }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists"
+          else
+            gh release create "$TAG" \
+              --title "Stickban $VERSION" \
+              --notes "Automatic release for version $VERSION (${BUMP} bump)." \
+              --generate-notes
+          fi
+
+  build-linux:
+    runs-on: ubuntu-latest
+    needs:
+      - version
+      - release
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply release version
+        run: node scripts/release/set-package-version.mjs "${{ needs.version.outputs.version }}"
+
+      - name: Build Linux artifacts
+        run: npm run dist:linux:ci
+
+      - name: Upload Linux release artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          shopt -s nullglob
+          files=(dist/*.AppImage dist/*.tar.gz)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No Linux artifacts were generated"
+            exit 1
+          fi
+          gh release upload "$TAG" "${files[@]}" --clobber
+
+  build-windows:
+    runs-on: windows-latest
+    needs:
+      - version
+      - release
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply release version
+        run: node scripts/release/set-package-version.mjs "${{ needs.version.outputs.version }}"
+
+      - name: Build Windows artifacts
+        run: npm run dist:win:ci
+
+      - name: Upload Windows release artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.version.outputs.tag }}
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem dist -Include *.exe -File
+          if ($files.Count -eq 0) {
+            Write-Error "No Windows artifacts were generated"
+            exit 1
+          }
+          $paths = $files | ForEach-Object { $_.FullName }
+          gh release upload $env:TAG $paths --clobber

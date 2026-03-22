@@ -17,14 +17,14 @@ If a proposal conflicts with `SPEC.md`, treat the spec as authoritative unless t
 **EN**
 
 - The repository is in bootstrap stage.
-- There is no application scaffold yet.
+- A runnable local-first application scaffold now exists.
 - Do not describe commands, scripts, folders, or modules as already implemented unless they exist in the repository.
 - Treat planned structure as planned structure, not current implementation.
 
 **PT-BR**
 
 - O repositorio esta em fase de bootstrap.
-- Ainda nao existe scaffold da aplicacao.
+- Ja existe um scaffold executavel local-first da aplicacao.
 - Nao descreva comandos, scripts, pastas ou modulos como ja implementados se eles nao existirem no repositorio.
 - Trate a estrutura planejada como estrutura planejada, nao como implementacao atual.
 
@@ -94,6 +94,7 @@ Avoid copying large sections from `SPEC.md`. Prefer linking back to the spec and
 Keep AI workflow policy and public transparency notes consistent across `README.md` and `README.pt-BR.md` when they change.
 Do not record completed implementation work in `ROADMAP.md`, and do not use `IMPLEMENTATION.md` as a backlog for future work.
 Do not introduce paid dependencies or cloud requirements into the initial scaffold unless the repository decisions are updated first.
+Treat commit conventions as release semantics, because pushes to `main` are expected to trigger automatic SemVer-based releases.
 
 ## Implementation Defaults / Defaults de Implementacao
 

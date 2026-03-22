@@ -7,7 +7,7 @@ This document tracks the real implementation state of the repository and the hig
 ## Current Repository State
 
 - The repository is still in bootstrap stage.
-- There is no runnable Electron application scaffold yet.
+- A runnable Electron application scaffold now exists.
 - The repository currently contains product and process documentation, license metadata, and logo assets.
 - Public project documentation exists in [`README.md`](./README.md) and [`README.pt-BR.md`](./README.pt-BR.md).
 - Product specification exists in [`SPEC.md`](./SPEC.md).
@@ -21,21 +21,22 @@ This document tracks the real implementation state of the repository and the hig
 - Git and line ending conventions documented
 - AI-assisted development policy documented
 - Public README split into English and Brazilian Portuguese versions
+- Initial Electron/React/TypeScript scaffold delivered
+- Local SQLite persistence layer delivered
+- Single-board drag-and-drop UI delivered
+- GitHub release/version automation configured for `main`
 
 ## Current Implementation Focus
 
-- No active application implementation is currently recorded in the repository
-- The next implementation milestone is the initial Electron/React/TypeScript scaffold
+- The current codebase implements the first local-only milestone
+- The next major step is hardening and manual validation before committing the scaffold
 - The initial scaffold should be usable without subscriptions, paid services, or cloud dependencies
 
 ## Not Implemented Yet
 
-- Electron main process
-- React renderer
-- SQLite persistence layer
-- Drag and drop UI
 - Synchronization layer
-- Packaged desktop application workflow
+- Release workflow validation on GitHub Actions
+- Multi-board support
 
 ## Notes
 

@@ -13,7 +13,7 @@ This document tracks planned product direction and upcoming milestones for Stick
 
 ## MVP
 
-Status: `planned`
+Status: `in progress`
 
 Goals and milestones:
 
