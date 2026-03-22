@@ -125,7 +125,9 @@ jobs:
           TAG: ${{ needs.version.outputs.tag }}
         shell: pwsh
         run: |
-          $files = Get-ChildItem dist -Include *.exe -File
+          $files = Get-ChildItem dist -Recurse -File | Where-Object {
+            $_.Extension -in @('.exe', '.blockmap')
+          }
           if ($files.Count -eq 0) {
             Write-Error "No Windows artifacts were generated"
             exit 1
