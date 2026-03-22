@@ -45,6 +45,7 @@ Agents should stay aligned with these project-level decisions:
 - Last-write-wins conflict resolution when remote sync is introduced
 - AI-assisted development by default, with manual edits allowed when appropriate
 - Initial scaffold must remain local-first and exclude Google sync, OAuth, and external infrastructure
+- Public landing page deployment must stay separate from the desktop release pipeline
 
 ## Agent Operating Rules / Regras Operacionais para Agentes
 
@@ -63,26 +64,29 @@ Agents should stay aligned with these project-level decisions:
 5. Keep the initial implementation scope intentionally narrow.
    Do not add Google Drive sync, OAuth, remote APIs, paid services, or cloud dependencies to the first scaffold unless the documented project direction changes.
 
-6. Prefer small, traceable changes.
+6. Keep the public landing page pipeline independent.
+   Changes to the public site must not break or replace the desktop app release workflow, and automatic Pages deployment must remain restricted to the official repository.
+
+7. Prefer small, traceable changes.
    Keep diffs narrow and document meaningful architectural changes.
 
-7. Record assumptions explicitly.
+8. Record assumptions explicitly.
    When code or infrastructure does not exist yet, note assumptions in documentation, task output, or decision records rather than silently filling gaps.
 
-8. Keep documentation synchronized with reality.
+9. Keep documentation synchronized with reality.
    Update [`README.md`](./README.md) when public-facing setup or project status changes.
    Update [`README.pt-BR.md`](./README.pt-BR.md) when the Portuguese public-facing guidance changes.
    Update [`ROADMAP.md`](./ROADMAP.md) when priorities or future direction change.
    Update [`IMPLEMENTATION.md`](./IMPLEMENTATION.md) when a relevant delivery changes the actual repository state.
    Update [`DECISIONS.md`](./DECISIONS.md) when architecture or implementation direction changes materially.
 
-9. Update Markdown documentation as part of every relevant delivery.
+10. Update Markdown documentation as part of every relevant delivery.
    If a change affects workflow, architecture, setup, scope, or repository conventions, update the affected `.md` files in the same delivery.
 
-10. Preserve the repository's AI-first development model.
+11. Preserve the repository's AI-first development model.
    Prefer implementation and maintenance through compatible AI-assisted tools and agents when possible, while allowing manual code edits as a complementary path when they are the better fit.
 
-11. Treat AI output as material that still requires technical validation.
+12. Treat AI output as material that still requires technical validation.
     Expected use of AI does not remove the need to review correctness, safety, maintainability, and repository alignment.
 
 ## Documentation Expectations / Expectativas de Documentacao
@@ -95,6 +99,7 @@ Keep AI workflow policy and public transparency notes consistent across `README.
 Do not record completed implementation work in `ROADMAP.md`, and do not use `IMPLEMENTATION.md` as a backlog for future work.
 Do not introduce paid dependencies or cloud requirements into the initial scaffold unless the repository decisions are updated first.
 Treat commit conventions as release semantics, because pushes to `main` are expected to trigger automatic SemVer-based releases.
+Keep GitHub Pages publication protected so forks can build the landing page without deploying the official domain.
 
 ## Implementation Defaults / Defaults de Implementacao
 

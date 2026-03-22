@@ -148,6 +148,20 @@
   Commit conventions become part of release semantics, and every change merged into `main` influences automated versioning and distribution artifacts.
   As commit conventions passam a fazer parte da semantica de release, e toda mudanca incorporada em `main` influencia o versionamento automatico e os artefatos de distribuicao.
 
+## D-011: Public Landing Page Deployment
+
+- Date / Data: 2026-03-22
+- Status: accepted
+- Context / Contexto:
+  The project needs a public-facing landing page that can be published automatically without coupling the site build to the desktop application release pipeline.
+  O projeto precisa de uma landing page publica que possa ser publicada automaticamente sem acoplar o build do site ao pipeline de release da aplicacao desktop.
+- Decision / Decisao:
+  Maintain the landing page inside the same repository under `site/`, publish it through a dedicated GitHub Pages workflow, use `stickban.com` as the canonical domain, and restrict automatic deployment to the official repository `ivanyort/stickban`.
+  Manter a landing page no mesmo repositorio em `site/`, publica-la por um workflow dedicado de GitHub Pages, usar `stickban.com` como dominio canonico e restringir a publicacao automatica ao repositorio oficial `ivanyort/stickban`.
+- Consequences / Consequencias:
+  The desktop app and public site can evolve independently, forks can still build the landing locally, and only the official repository is allowed to publish the canonical public site.
+  O app desktop e o site publico podem evoluir de forma independente, forks continuam podendo buildar a landing localmente, e apenas o repositorio oficial pode publicar o site publico canonico.
+
 ## Notes / Notas
 
 **EN:** Entries marked as `planned` reflect current intended direction from the specification and should be validated during implementation.  

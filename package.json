@@ -11,6 +11,8 @@
     "dev:root": "npm run build && electron --no-sandbox out/main/index.js",
     "start": "electron-vite preview",
     "start:root": "electron --no-sandbox out/main/index.js",
+    "site:dev": "vite --config site/vite.config.ts",
+    "site:build": "vite build --config site/vite.config.ts",
     "typecheck": "tsc --noEmit",
     "build": "npm run typecheck && electron-vite build",
     "dist": "npm run build && electron-builder --publish never",

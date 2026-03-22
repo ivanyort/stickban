@@ -53,6 +53,7 @@ Comandos:
 ```bash
 npm install
 npm run dev
+npm run site:build
 ```
 
 Se voce estiver rodando como `root` em WSL/Linux, use:
@@ -119,12 +120,20 @@ Para o roadmap detalhado, veja [`ROADMAP.md`](./ROADMAP.md).
 - [`AGENTS.md`](./AGENTS.md): guia operacional para agentes de programacao
 - [`DECISIONS.md`](./DECISIONS.md): registro de decisoes arquiteturais
 
+## Landing Page
+
+- O projeto inclui uma landing page publica buildada a partir de [`site/`](./site)
+- A landing page foi pensada para publicacao no GitHub Pages
+- O dominio publico canonico e `stickban.com`
+- Forks podem buildar o site, mas a publicacao automatica no Pages fica restrita ao repositorio oficial
+
 ## Releases
 
 - Cada push para `main` deve gerar uma GitHub Release automatica
 - A versao da release e calculada a partir das commit conventions desde a ultima tag SemVer
 - `feat` sobe minor, `fix` e tipos operacionais sobem patch, e `BREAKING CHANGE` ou `type!` sobem major
 - Artefatos de release sao gerados para Windows e Linux
+- A landing page publica e publicada separadamente do pipeline de release do app desktop
 
 ## Desenvolvimento Assistido por IA
 
