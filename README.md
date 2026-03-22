@@ -133,6 +133,7 @@ For the detailed roadmap, see [`ROADMAP.md`](./ROADMAP.md).
 - The release version is calculated from commit conventions since the latest SemVer tag
 - `feat` bumps minor, `fix` and operational commit types bump patch, and `BREAKING CHANGE` or `type!` bumps major
 - Release artifacts are produced for Windows and Linux
+- Windows releases are distributed as an NSIS installer
 - The public landing page is deployed separately from the desktop release pipeline
 
 ## AI-Assisted Development

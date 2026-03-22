@@ -13,7 +13,6 @@ linux:
 win:
   target:
     - nsis
-    - portable
 nsis:
   oneClick: false
   perMachine: false

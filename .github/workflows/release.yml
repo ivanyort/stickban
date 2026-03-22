@@ -125,7 +125,7 @@ jobs:
           TAG: ${{ needs.version.outputs.tag }}
         shell: pwsh
         run: |
-          $files = Get-ChildItem dist -Recurse -File | Where-Object {
+          $files = Get-ChildItem dist -File | Where-Object {
             $_.Extension -in @('.exe', '.blockmap')
           }
           if ($files.Count -eq 0) {

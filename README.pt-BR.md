@@ -133,6 +133,7 @@ Para o roadmap detalhado, veja [`ROADMAP.md`](./ROADMAP.md).
 - A versao da release e calculada a partir das commit conventions desde a ultima tag SemVer
 - `feat` sobe minor, `fix` e tipos operacionais sobem patch, e `BREAKING CHANGE` ou `type!` sobem major
 - Artefatos de release sao gerados para Windows e Linux
+- As releases de Windows sao distribuidas como instalador NSIS
 - A landing page publica e publicada separadamente do pipeline de release do app desktop
 
 ## Desenvolvimento Assistido por IA

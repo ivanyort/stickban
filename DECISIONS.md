@@ -142,8 +142,8 @@
   Pushes to `main` should produce consistent releases and version numbers without manual release bookkeeping or extra version bump commits.
   Pushes para `main` devem produzir releases e numeros de versao consistentes sem controle manual de release ou commits extras apenas para bump de versao.
 - Decision / Decisao:
-  Use automatic GitHub Releases on every push to `main`, calculating the next SemVer version from commit conventions since the latest tag. Treat `feat` as minor, operational and fix-style commits as patch, and `BREAKING CHANGE` or `type!` as major. Build and attach Windows and Linux artifacts in the release workflow.
-  Usar GitHub Releases automaticas a cada push para `main`, calculando a proxima versao SemVer a partir das commit conventions desde a ultima tag. Tratar `feat` como minor, commits operacionais e corretivos como patch, e `BREAKING CHANGE` ou `type!` como major. Gerar e anexar artefatos de Windows e Linux no workflow de release.
+  Use automatic GitHub Releases on every push to `main`, calculating the next SemVer version from commit conventions since the latest tag. Treat `feat` as minor, operational and fix-style commits as patch, and `BREAKING CHANGE` or `type!` as major. Build and attach Windows and Linux artifacts in the release workflow, using an NSIS installer for Windows and `AppImage` plus `tar.gz` for Linux.
+  Usar GitHub Releases automaticas a cada push para `main`, calculando a proxima versao SemVer a partir das commit conventions desde a ultima tag. Tratar `feat` como minor, commits operacionais e corretivos como patch, e `BREAKING CHANGE` ou `type!` como major. Gerar e anexar artefatos de Windows e Linux no workflow de release, usando instalador NSIS para Windows e `AppImage` mais `tar.gz` para Linux.
 - Consequences / Consequencias:
   Commit conventions become part of release semantics, and every change merged into `main` influences automated versioning and distribution artifacts.
   As commit conventions passam a fazer parte da semantica de release, e toda mudanca incorporada em `main` influencia o versionamento automatico e os artefatos de distribuicao.
