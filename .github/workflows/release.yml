@@ -52,46 +52,6 @@ jobs:
               --generate-notes
           fi
 
-  build-linux:
-    runs-on: ubuntu-latest
-    needs:
-      - version
-      - release
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Apply release version
-        run: node scripts/release/set-package-version.mjs "${{ needs.version.outputs.version }}"
-
-      - name: Build Linux artifacts
-        run: npm run dist:linux:ci
-
-      - name: Upload Linux release artifacts
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          TAG: ${{ needs.version.outputs.tag }}
-        run: |
-          shopt -s nullglob
-          files=(dist/*.AppImage dist/*.tar.gz)
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "No Linux artifacts were generated"
-            exit 1
-          fi
-          gh release upload "$TAG" "${files[@]}" --clobber
-
   build-windows:
     runs-on: windows-latest
     needs:
@@ -126,7 +86,7 @@ jobs:
         shell: pwsh
         run: |
           $files = Get-ChildItem dist -File | Where-Object {
-            $_.Extension -in @('.exe', '.blockmap')
+            $_.Extension -eq '.exe'
           }
           if ($files.Count -eq 0) {
             Write-Error "No Windows artifacts were generated"

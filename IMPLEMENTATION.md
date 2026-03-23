@@ -26,6 +26,7 @@ This document tracks the real implementation state of the repository and the hig
 - Single-board drag-and-drop UI delivered
 - GitHub release/version automation configured for `main`
 - Windows release packaging simplified to NSIS installer only
+- Public GitHub Releases currently publish Windows artifacts only
 - Public landing page scaffold delivered under `site/`
 - GitHub Pages deployment workflow configured with repository-level fork protection
 

@@ -132,8 +132,9 @@ For the detailed roadmap, see [`ROADMAP.md`](./ROADMAP.md).
 - Every push to `main` is intended to generate an automatic GitHub Release
 - The release version is calculated from commit conventions since the latest SemVer tag
 - `feat` bumps minor, `fix` and operational commit types bump patch, and `BREAKING CHANGE` or `type!` bumps major
-- Release artifacts are produced for Windows and Linux
+- Public release artifacts are currently produced for Windows only
 - Windows releases are distributed as an NSIS installer
+- Linux packaging remains available for local builds, but Linux artifacts are not currently published in GitHub Releases
 - The public landing page is deployed separately from the desktop release pipeline
 
 ## AI-Assisted Development

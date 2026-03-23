@@ -132,8 +132,9 @@ Para o roadmap detalhado, veja [`ROADMAP.md`](./ROADMAP.md).
 - Cada push para `main` deve gerar uma GitHub Release automatica
 - A versao da release e calculada a partir das commit conventions desde a ultima tag SemVer
 - `feat` sobe minor, `fix` e tipos operacionais sobem patch, e `BREAKING CHANGE` ou `type!` sobem major
-- Artefatos de release sao gerados para Windows e Linux
+- Artefatos publicos de release sao gerados atualmente apenas para Windows
 - As releases de Windows sao distribuidas como instalador NSIS
+- O empacotamento para Linux continua disponivel localmente, mas artefatos Linux nao sao publicados nas GitHub Releases neste momento
 - A landing page publica e publicada separadamente do pipeline de release do app desktop
 
 ## Desenvolvimento Assistido por IA
