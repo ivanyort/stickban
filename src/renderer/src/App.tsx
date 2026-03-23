@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   CloudOff,
   GripVertical,
@@ -12,21 +12,25 @@ import {
   Trash2,
   X
 } from 'lucide-react'
-import type { CardDraft, CardRecord, ColumnRecord } from '@shared/types'
+import type { BoardSummary, CardDraft, CardRecord, ColumnRecord } from '@shared/types'
 import { Button } from '@renderer/components/ui/button'
 import { Input } from '@renderer/components/ui/input'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@renderer/components/ui/dropdown-menu'
+import { StickbanMark } from '@renderer/components/brand/stickban-mark'
 import { cn } from '@renderer/lib/utils'
 import { useBoardStore } from './store'
 
 function App(): JSX.Element {
   const {
-    board,
+    boards,
+    activeBoardId,
+    activeBoard,
     alwaysOnTop,
     isMaximized,
     platform,
@@ -35,7 +39,14 @@ function App(): JSX.Element {
     error,
     editingCard,
     initialize,
+    createBoard,
     updateBoard,
+    deleteBoard,
+    setActiveBoard,
+    createColumn,
+    updateColumn,
+    deleteColumn,
+    moveColumn,
     createCard,
     updateCard,
     deleteCard,
@@ -46,42 +57,32 @@ function App(): JSX.Element {
     toggleMaximizeWindow,
     closeWindow
   } = useBoardStore()
-  const [boardTitle, setBoardTitle] = useState('My Board')
-  const [editingBoardTitle, setEditingBoardTitle] = useState(false)
+  const [editingBoardId, setEditingBoardId] = useState<string | null>(null)
+  const [editingBoardTitle, setEditingBoardTitle] = useState('')
   const [draggedTask, setDraggedTask] = useState<{ taskId: string; columnId: string } | null>(null)
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
-  const boardTitleRef = useRef<HTMLInputElement>(null)
+  const [draggedColumn, setDraggedColumn] = useState<{ columnId: string; boardId: string } | null>(null)
+  const [dragOverColumnPosition, setDragOverColumnPosition] = useState<{
+    columnId: string
+    position: 'left' | 'right'
+  } | null>(null)
+  const [dragOverBoardId, setDragOverBoardId] = useState<string | null>(null)
 
   useEffect(() => {
     void initialize()
   }, [initialize])
 
   useEffect(() => {
-    if (board) {
-      setBoardTitle(board.title)
+    if (editingBoardId && !boards.some((board) => board.id === editingBoardId)) {
+      setEditingBoardId(null)
+      setEditingBoardTitle('')
     }
-  }, [board])
+  }, [boards, editingBoardId])
 
-  const persistBoardTitle = (): void => {
-    if (!board) {
-      return
-    }
-
-    const nextTitle = boardTitle.trim()
-
-    if (!nextTitle) {
-      setBoardTitle(board.title)
-      setEditingBoardTitle(false)
-      return
-    }
-
-    if (nextTitle !== board.title) {
-      void updateBoard({ title: nextTitle })
-    }
-
-    setBoardTitle(nextTitle)
-    setEditingBoardTitle(false)
-  }
+  const orderedColumns = useMemo(
+    () => activeBoard?.columns.slice().sort((a, b) => a.position - b.position) ?? [],
+    [activeBoard]
+  )
 
   if (loading) {
     return (
@@ -93,18 +94,64 @@ function App(): JSX.Element {
     )
   }
 
-  if (!board) {
+  if (!activeBoard || !activeBoardId) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-6">
         <div className="max-w-md rounded-xl border border-destructive/20 bg-card p-6 shadow-card">
-          <h1 className="text-lg font-semibold text-card-foreground">Stickban could not load the board</h1>
+          <h1 className="text-lg font-semibold text-card-foreground">Stickban could not load the workspace</h1>
           <p className="mt-2 text-sm text-muted-foreground">{error ?? 'Unexpected application state.'}</p>
         </div>
       </div>
     )
   }
 
-  const totalCards = board.columns.reduce((acc, column) => acc + column.cards.length, 0)
+  const totalCards = orderedColumns.reduce((acc, column) => acc + column.cards.length, 0)
+
+  const startBoardRename = (board: BoardSummary): void => {
+    setEditingBoardId(board.id)
+    setEditingBoardTitle(board.title)
+  }
+
+  const persistBoardRename = (): void => {
+    if (!editingBoardId) {
+      return
+    }
+
+    const targetBoard = boards.find((board) => board.id === editingBoardId)
+    if (!targetBoard) {
+      setEditingBoardId(null)
+      setEditingBoardTitle('')
+      return
+    }
+
+    const nextTitle = editingBoardTitle.trim()
+    if (!nextTitle) {
+      setEditingBoardId(null)
+      setEditingBoardTitle('')
+      return
+    }
+
+    if (nextTitle !== targetBoard.title) {
+      void updateBoard(editingBoardId, { title: nextTitle })
+    }
+
+    setEditingBoardId(null)
+    setEditingBoardTitle('')
+  }
+
+  const handleDeleteBoard = (board: BoardSummary): void => {
+    if (boards.length <= 1) {
+      return
+    }
+
+    const confirmed = window.confirm(
+      `Delete board "${board.title}"? This will permanently remove its columns and cards.`
+    )
+
+    if (confirmed) {
+      void deleteBoard(board.id)
+    }
+  }
 
   const handleDragStart = (taskId: string, columnId: string): void => {
     setDraggedTask({ taskId, columnId })
@@ -128,7 +175,7 @@ function App(): JSX.Element {
       return
     }
 
-    const targetColumn = board.columns.find((column) => column.id === targetColumnId)
+    const targetColumn = orderedColumns.find((column) => column.id === targetColumnId)
     if (!targetColumn) {
       setDraggedTask(null)
       return
@@ -143,70 +190,166 @@ function App(): JSX.Element {
     setDragOverColumn(null)
   }
 
+  const handleColumnDragStart = (columnId: string, boardId: string): void => {
+    setDraggedColumn({ columnId, boardId })
+  }
+
+  const handleColumnDragOver = (event: React.DragEvent, columnId: string): void => {
+    event.preventDefault()
+    if (!draggedColumn) {
+      return
+    }
+
+    const rect = event.currentTarget.getBoundingClientRect()
+    const midpoint = rect.left + rect.width / 2
+    const position = event.clientX < midpoint ? 'left' : 'right'
+    setDragOverColumnPosition({ columnId, position })
+  }
+
+  const handleColumnDragLeave = (): void => {
+    setDragOverColumnPosition(null)
+  }
+
+  const handleColumnDrop = (
+    event: React.DragEvent,
+    targetColumnId: string,
+    targetBoardId: string
+  ): void => {
+    event.preventDefault()
+    setDragOverColumnPosition(null)
+    setDragOverBoardId(null)
+
+    if (!draggedColumn) {
+      return
+    }
+
+    const { columnId: sourceColumnId } = draggedColumn
+    const target = event.currentTarget as HTMLElement | null
+    const rect = target?.getBoundingClientRect()
+    const insertAfter = rect ? event.clientX >= rect.left + rect.width / 2 : false
+    const targetIndex = orderedColumns.findIndex((column) => column.id === targetColumnId)
+
+    if (targetIndex === -1) {
+      setDraggedColumn(null)
+      return
+    }
+
+    const nextIndex = targetIndex + (insertAfter ? 1 : 0)
+    void (async () => {
+      await moveColumn({ columnId: sourceColumnId, toBoardId: targetBoardId, toIndex: nextIndex })
+      if (activeBoardId !== targetBoardId) {
+        await setActiveBoard(targetBoardId)
+      }
+    })()
+
+    setDraggedColumn(null)
+  }
+
+  const handleColumnDragEnd = (): void => {
+    setDraggedColumn(null)
+    setDragOverColumnPosition(null)
+    setDragOverBoardId(null)
+  }
+
+  const handleBoardTabDragOver = (event: React.DragEvent, boardId: string): void => {
+    event.preventDefault()
+    if (draggedColumn && boardId !== draggedColumn.boardId) {
+      setDragOverBoardId(boardId)
+    }
+  }
+
+  const handleBoardTabDragLeave = (): void => {
+    setDragOverBoardId(null)
+  }
+
+  const handleBoardTabDrop = (event: React.DragEvent, targetBoardId: string): void => {
+    event.preventDefault()
+    setDragOverBoardId(null)
+
+    if (!draggedColumn || draggedColumn.boardId === targetBoardId) {
+      setDraggedColumn(null)
+      return
+    }
+
+    const targetBoard = boards.find((board) => board.id === targetBoardId)
+    if (!targetBoard) {
+      setDraggedColumn(null)
+      return
+    }
+
+    void (async () => {
+      await moveColumn({
+        columnId: draggedColumn.columnId,
+        toBoardId: targetBoardId,
+        toIndex: targetBoard.columnCount
+      })
+      await setActiveBoard(targetBoardId)
+    })()
+    setDraggedColumn(null)
+  }
+
   return (
     <div className="flex h-screen flex-col bg-background">
       {platform === 'win32' ? <div className="pointer-events-none fixed inset-x-0 top-14 z-40 h-px bg-border" /> : null}
       <header
-        className={cn('flex h-14 shrink-0 items-center justify-between bg-card px-4', platform !== 'win32' && 'border-b border-border', platform === 'win32' && 'pr-[140px]')}
+        className={cn(
+          'flex h-14 shrink-0 items-center justify-between gap-4 bg-card px-4',
+          platform !== 'win32' && 'border-b border-border',
+          platform === 'win32' && 'pr-[140px]'
+        )}
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
       >
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                className="h-4 w-4"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <rect x="3" y="3" width="7" height="9" rx="1" />
-                <rect x="14" y="3" width="7" height="6" rx="1" />
-                <rect x="3" y="15" width="7" height="6" rx="1" />
-                <rect x="14" y="12" width="7" height="9" rx="1" />
-              </svg>
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center">
+              <StickbanMark />
             </div>
             <span className="text-base font-semibold tracking-tight text-foreground">Stickban</span>
           </div>
 
-          <div className="h-5 w-px bg-border" />
+          <div className="h-5 w-px shrink-0 bg-border" />
 
-          {editingBoardTitle ? (
-            <Input
-              ref={boardTitleRef}
-              value={boardTitle}
-              onChange={(event) => setBoardTitle(event.target.value)}
-              onBlur={persistBoardTitle}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  persistBoardTitle()
-                }
+          <div
+            className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-1 scrollbar-thin"
+            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+          >
+            {boards.map((board) => (
+              <BoardTab
+                board={board}
+                canDelete={boards.length > 1}
+                isColumnDropTarget={dragOverBoardId === board.id}
+                editingBoardId={editingBoardId}
+                editingTitle={editingBoardTitle}
+                isActive={board.id === activeBoardId}
+                key={board.id}
+                onActivate={() => void setActiveBoard(board.id)}
+                onColumnDragLeave={handleBoardTabDragLeave}
+                onColumnDragOver={(event) => handleBoardTabDragOver(event, board.id)}
+                onColumnDrop={(event) => handleBoardTabDrop(event, board.id)}
+                onDelete={() => handleDeleteBoard(board)}
+                onEditTitleChange={setEditingBoardTitle}
+                onRename={() => startBoardRename(board)}
+                onRenameCancel={() => {
+                  setEditingBoardId(null)
+                  setEditingBoardTitle('')
+                }}
+                onRenameCommit={persistBoardRename}
+              />
+            ))}
 
-                if (event.key === 'Escape') {
-                  setBoardTitle(board.title)
-                  setEditingBoardTitle(false)
-                }
-              }}
-              className="h-7 w-40 border-transparent bg-transparent px-1 text-sm font-medium shadow-none focus-visible:border-border focus-visible:bg-background"
-              autoFocus
-              style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
-            />
-          ) : (
-            <button
-              onClick={() => {
-                setEditingBoardTitle(true)
-                window.setTimeout(() => boardTitleRef.current?.focus(), 0)
-              }}
-              className="rounded px-1 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
-              type="button"
-              style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0 rounded-full border border-dashed border-border text-muted-foreground hover:border-border hover:text-foreground"
+              onClick={() => void createBoard({ title: `Board ${boards.length + 1}` })}
+              title="Add board"
             >
-              {boardTitle}
-            </button>
-          )}
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+        <div className="flex shrink-0 items-center gap-3" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
           <div className="flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-muted-foreground">
             <CloudOff className="h-3 w-3" />
             <span>Local</span>
@@ -276,32 +419,51 @@ function App(): JSX.Element {
       ) : null}
 
       <main className="flex flex-1 gap-4 overflow-x-auto p-4">
-        {board.columns
-          .slice()
-          .sort((a, b) => a.position - b.position)
-          .map((column) => (
-            <BoardColumn
-              addingDisabled={Boolean(editingCard)}
-              column={column}
-              dragOverColumn={dragOverColumn}
-              draggedTaskId={draggedTask?.taskId ?? null}
-              key={column.id}
-              onAddCard={(draft) => void createCard(column.id, draft)}
-              onDeleteCard={(cardId) => void deleteCard(cardId)}
-              onDragEnd={handleDragEnd}
-              onDragLeave={handleDragLeave}
-              onDragOver={handleDragOver}
-              onDragStart={handleDragStart}
-              onDrop={handleDrop}
-              onEditCard={setEditingCard}
-            />
-          ))}
+        {orderedColumns.map((column) => (
+          <BoardColumn
+            addingDisabled={Boolean(editingCard)}
+            boardId={activeBoard.id}
+            column={column}
+            draggedColumnId={draggedColumn?.columnId ?? null}
+            dragOverColumn={dragOverColumn}
+            dragOverColumnPosition={dragOverColumnPosition}
+            draggedTaskId={draggedTask?.taskId ?? null}
+            key={column.id}
+            onAddCard={(draft) => void createCard(column.id, draft)}
+            onColumnDragEnd={handleColumnDragEnd}
+            onColumnDragLeave={handleColumnDragLeave}
+            onColumnDragOver={handleColumnDragOver}
+            onColumnDragStart={handleColumnDragStart}
+            onColumnDrop={handleColumnDrop}
+            onDeleteCard={(cardId) => void deleteCard(cardId)}
+            onDeleteColumn={(columnToDelete) => {
+              const confirmed = window.confirm(
+                columnToDelete.cards.length > 0
+                  ? `Delete column "${columnToDelete.title}" and its ${columnToDelete.cards.length} cards?`
+                  : `Delete column "${columnToDelete.title}"?`
+              )
+
+              if (confirmed) {
+                void deleteColumn(columnToDelete.id)
+              }
+            }}
+            onDragEnd={handleDragEnd}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDragStart={handleDragStart}
+            onDrop={handleDrop}
+            onEditCard={setEditingCard}
+            onRenameColumn={(columnId, draft) => void updateColumn(columnId, { title: draft })}
+          />
+        ))}
+
+        <AddColumnPanel onAdd={(title) => void createColumn(activeBoard.id, { title })} />
       </main>
 
       <footer className="flex h-8 shrink-0 items-center justify-between border-t border-border bg-card px-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-4">
           <span>
-            {totalCards} tasks across {board.columns.length} columns
+            {totalCards} tasks across {orderedColumns.length} columns
           </span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -321,69 +483,295 @@ function App(): JSX.Element {
   )
 }
 
+function BoardTab({
+  board,
+  canDelete,
+  isColumnDropTarget,
+  editingBoardId,
+  editingTitle,
+  isActive,
+  onActivate,
+  onColumnDragLeave,
+  onColumnDragOver,
+  onColumnDrop,
+  onDelete,
+  onEditTitleChange,
+  onRename,
+  onRenameCancel,
+  onRenameCommit
+}: {
+  board: BoardSummary
+  canDelete: boolean
+  isColumnDropTarget: boolean
+  editingBoardId: string | null
+  editingTitle: string
+  isActive: boolean
+  onActivate: () => void
+  onColumnDragLeave: () => void
+  onColumnDragOver: (event: React.DragEvent) => void
+  onColumnDrop: (event: React.DragEvent) => void
+  onDelete: () => void
+  onEditTitleChange: (value: string) => void
+  onRename: () => void
+  onRenameCancel: () => void
+  onRenameCommit: () => void
+}): JSX.Element {
+  const isEditing = editingBoardId === board.id
+
+  return (
+    <div
+      onDragLeave={onColumnDragLeave}
+      onDragOver={onColumnDragOver}
+      onDrop={onColumnDrop}
+      className={cn(
+        'flex h-8 shrink-0 items-center gap-1 rounded-full border px-2.5 transition-colors',
+        isColumnDropTarget && 'border-primary/60 bg-primary/10 text-foreground ring-2 ring-primary/20',
+        isActive
+          ? 'border-border bg-card text-foreground shadow-card'
+          : 'border-transparent bg-secondary/70 text-muted-foreground hover:border-border/60 hover:text-foreground'
+      )}
+    >
+      {isEditing ? (
+        <Input
+          autoFocus
+          className="h-6 w-28 border-0 bg-transparent px-1 text-sm font-medium shadow-none focus-visible:ring-0"
+          onBlur={onRenameCommit}
+          onChange={(event) => onEditTitleChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              onRenameCommit()
+            }
+
+            if (event.key === 'Escape') {
+              onRenameCancel()
+            }
+          }}
+          value={editingTitle}
+        />
+      ) : (
+        <button
+          className="max-w-36 truncate px-1 text-sm font-medium"
+          onClick={onActivate}
+          type="button"
+        >
+          {board.title}
+        </button>
+      )}
+
+      {!isEditing ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 rounded-full text-muted-foreground hover:text-foreground"
+            >
+              <MoreHorizontal className="h-3.5 w-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-36">
+            <DropdownMenuItem onClick={onRename}>
+              <Pencil className="mr-2 h-3.5 w-3.5" />
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              disabled={!canDelete}
+              onClick={onDelete}
+            >
+              <Trash2 className="mr-2 h-3.5 w-3.5" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : null}
+    </div>
+  )
+}
+
 function BoardColumn({
   addingDisabled,
+  boardId,
   column,
+  draggedColumnId,
   dragOverColumn,
+  dragOverColumnPosition,
   draggedTaskId,
   onAddCard,
+  onColumnDragEnd,
+  onColumnDragLeave,
+  onColumnDragOver,
+  onColumnDragStart,
+  onColumnDrop,
   onDeleteCard,
+  onDeleteColumn,
   onDragEnd,
   onDragLeave,
   onDragOver,
   onDragStart,
   onDrop,
-  onEditCard
+  onEditCard,
+  onRenameColumn
 }: {
   addingDisabled: boolean
+  boardId: string
   column: ColumnRecord
+  draggedColumnId: string | null
   dragOverColumn: string | null
+  dragOverColumnPosition: { columnId: string; position: 'left' | 'right' } | null
   draggedTaskId: string | null
   onAddCard: (draft: CardDraft) => void
+  onColumnDragEnd: () => void
+  onColumnDragLeave: () => void
+  onColumnDragOver: (event: React.DragEvent, columnId: string) => void
+  onColumnDragStart: (columnId: string, boardId: string) => void
+  onColumnDrop: (event: React.DragEvent, targetColumnId: string, targetBoardId: string) => void
   onDeleteCard: (cardId: string) => void
+  onDeleteColumn: (column: ColumnRecord) => void
   onDragEnd: () => void
   onDragLeave: () => void
   onDragOver: (event: React.DragEvent, columnId: string) => void
   onDragStart: (taskId: string, columnId: string) => void
   onDrop: (event: React.DragEvent, targetColumnId: string) => void
   onEditCard: (card: CardRecord) => void
+  onRenameColumn: (columnId: string, title: string) => void
 }): JSX.Element {
   const [isAdding, setIsAdding] = useState(false)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [isEditingColumn, setIsEditingColumn] = useState(false)
+  const [columnTitle, setColumnTitle] = useState(column.title)
+
+  useEffect(() => {
+    setColumnTitle(column.title)
+  }, [column.title, boardId])
+
+  const persistColumnTitle = (): void => {
+    const nextTitle = columnTitle.trim()
+
+    if (!nextTitle) {
+      setColumnTitle(column.title)
+      setIsEditingColumn(false)
+      return
+    }
+
+    if (nextTitle !== column.title) {
+      onRenameColumn(column.id, nextTitle)
+    }
+
+    setColumnTitle(nextTitle)
+    setIsEditingColumn(false)
+  }
 
   return (
     <div
-      onDragLeave={onDragLeave}
-      onDragOver={(event) => onDragOver(event, column.id)}
-      onDrop={(event) => onDrop(event, column.id)}
+      draggable
+      onDragEnd={onColumnDragEnd}
+      onDragLeave={onColumnDragLeave}
+      onDragOver={(event) => onColumnDragOver(event, column.id)}
+      onDragStart={() => onColumnDragStart(column.id, boardId)}
+      onDrop={(event) => onColumnDrop(event, column.id, boardId)}
       className={cn(
-        'flex w-72 shrink-0 flex-col rounded-xl border border-border bg-column p-3 transition-all duration-200',
-        dragOverColumn === column.id && 'border-primary/50 bg-primary/5 ring-2 ring-primary/20'
+        'relative flex w-72 shrink-0 flex-col rounded-xl border border-border bg-column p-3 transition-all duration-200',
+        dragOverColumn === column.id && 'border-primary/50 bg-primary/5 ring-2 ring-primary/20',
+        draggedColumnId === column.id && 'opacity-60'
       )}
     >
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-foreground">{column.title}</h2>
+      {dragOverColumnPosition?.columnId === column.id ? (
+        <div
+          className={cn(
+            'absolute bottom-3 top-3 z-20 w-1 rounded-full bg-primary',
+            dragOverColumnPosition.position === 'left' ? '-left-2' : '-right-2'
+          )}
+        />
+      ) : null}
+
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          {isEditingColumn ? (
+            <Input
+              autoFocus
+              className="h-7 w-32 border-transparent bg-transparent px-1 text-sm font-semibold shadow-none focus-visible:border-border focus-visible:bg-background"
+              onBlur={persistColumnTitle}
+              onChange={(event) => setColumnTitle(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  persistColumnTitle()
+                }
+
+                if (event.key === 'Escape') {
+                  setColumnTitle(column.title)
+                  setIsEditingColumn(false)
+                }
+              }}
+              value={columnTitle}
+            />
+          ) : (
+            <button
+              className="truncate text-left text-sm font-semibold text-foreground"
+              onClick={() => setIsEditingColumn(true)}
+              type="button"
+            >
+              {column.title}
+            </button>
+          )}
           <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-xs font-medium text-muted-foreground">
             {column.cards.length}
           </span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-muted-foreground hover:text-foreground"
-          onClick={() => {
-            setIsAdding(true)
-            setTitle('')
-            setDescription('')
-          }}
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
+
+        <div className="flex items-center gap-1">
+          <div className="flex h-7 w-7 items-center justify-center text-muted-foreground/70">
+            <GripVertical className="h-4 w-4" />
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              >
+                <MoreHorizontal className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-36">
+              <DropdownMenuItem onClick={() => setIsEditingColumn(true)}>
+                <Pencil className="mr-2 h-3.5 w-3.5" />
+                Rename
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => onDeleteColumn(column)}
+              >
+                <Trash2 className="mr-2 h-3.5 w-3.5" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              setIsAdding(true)
+              setTitle('')
+              setDescription('')
+            }}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
+      <div
+        className="flex flex-1 flex-col gap-2 overflow-y-auto"
+        onDragLeave={onDragLeave}
+        onDragOver={(event) => onDragOver(event, column.id)}
+        onDrop={(event) => onDrop(event, column.id)}
+      >
         {column.cards.length === 0 && !isAdding ? (
           <div className="flex flex-1 flex-col items-center justify-center rounded-lg border-2 border-dashed border-border/60 py-8 text-center">
             <p className="text-xs text-muted-foreground">No tasks yet</p>
@@ -474,6 +862,77 @@ function BoardColumn({
           Add card
         </button>
       ) : null}
+    </div>
+  )
+}
+
+function AddColumnPanel({
+  onAdd
+}: {
+  onAdd: (title: string) => void
+}): JSX.Element {
+  const [isAdding, setIsAdding] = useState(false)
+  const [title, setTitle] = useState('')
+
+  if (!isAdding) {
+    return (
+      <button
+        className="flex h-16 w-72 shrink-0 items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 bg-card/70 text-sm font-medium text-muted-foreground transition-colors hover:border-border hover:bg-card hover:text-foreground"
+        onClick={() => setIsAdding(true)}
+        type="button"
+      >
+        <Plus className="h-4 w-4" />
+        Add column
+      </button>
+    )
+  }
+
+  return (
+    <div className="h-fit w-72 shrink-0 rounded-xl border border-border bg-card p-3 shadow-card">
+      <Input
+        autoFocus
+        className="h-9"
+        onChange={(event) => setTitle(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && title.trim()) {
+            onAdd(title.trim())
+            setTitle('')
+            setIsAdding(false)
+          }
+
+          if (event.key === 'Escape') {
+            setTitle('')
+            setIsAdding(false)
+          }
+        }}
+        placeholder="Column title"
+        value={title}
+      />
+      <div className="mt-3 flex gap-2">
+        <Button
+          size="sm"
+          onClick={() => {
+            if (!title.trim()) {
+              return
+            }
+            onAdd(title.trim())
+            setTitle('')
+            setIsAdding(false)
+          }}
+        >
+          Add
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            setTitle('')
+            setIsAdding(false)
+          }}
+        >
+          Cancel
+        </Button>
+      </div>
     </div>
   )
 }

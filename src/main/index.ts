@@ -1,7 +1,22 @@
 import { app, BrowserWindow, ipcMain, Menu } from 'electron'
 import { join } from 'node:path'
-import { createCard, deleteCard, getBoard, initializeDatabase, moveCard, updateBoard, updateCard } from './database'
-import type { BoardDraft, CardDraft, CardMovePayload } from '../shared/types'
+import {
+  createBoard,
+  createCard,
+  createColumn,
+  deleteBoard,
+  deleteCard,
+  deleteColumn,
+  getWorkspace,
+  initializeDatabase,
+  moveColumn,
+  moveCard,
+  setActiveBoard,
+  updateBoard,
+  updateCard,
+  updateColumn
+} from './database'
+import type { BoardDraft, CardDraft, CardMovePayload, ColumnDraft, ColumnMovePayload } from '../shared/types'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -53,8 +68,19 @@ function createMainWindow(): BrowserWindow {
 }
 
 function registerIpc(): void {
-  ipcMain.handle('board:get', () => getBoard())
-  ipcMain.handle('board:update', (_event, draft: BoardDraft) => updateBoard(draft))
+  ipcMain.handle('workspace:get', () => getWorkspace())
+  ipcMain.handle('board:create', (_event, draft: BoardDraft) => createBoard(draft))
+  ipcMain.handle('board:update', (_event, boardId: string, draft: BoardDraft) => updateBoard(boardId, draft))
+  ipcMain.handle('board:delete', (_event, boardId: string) => deleteBoard(boardId))
+  ipcMain.handle('board:setActive', (_event, boardId: string) => setActiveBoard(boardId))
+  ipcMain.handle('column:create', (_event, boardId: string, draft: ColumnDraft) => createColumn(boardId, draft))
+  ipcMain.handle('column:update', (_event, columnId: string, draft: ColumnDraft) =>
+    updateColumn(columnId, draft)
+  )
+  ipcMain.handle('column:delete', (_event, columnId: string) => deleteColumn(columnId))
+  ipcMain.handle('column:move', (_event, payload: ColumnMovePayload) =>
+    moveColumn(payload.columnId, payload.toBoardId, payload.toIndex)
+  )
   ipcMain.handle('card:create', (_event, columnId: string, draft: CardDraft) => createCard(columnId, draft))
   ipcMain.handle('card:update', (_event, cardId: string, draft: CardDraft) => updateCard(cardId, draft))
   ipcMain.handle('card:delete', (_event, cardId: string) => deleteCard(cardId))

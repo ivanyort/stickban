@@ -12,9 +12,9 @@ Stickban e um aplicativo desktop de Kanban focado em velocidade, baixo atrito e 
 
 Este repositorio esta em fase de bootstrap. A especificacao do produto existe em [`SPEC.md`](./SPEC.md), e o primeiro scaffold executavel da aplicacao agora ja existe.
 
-A documentacao deste repositorio serve para estabelecer direcao antes do inicio da implementacao.
-O primeiro milestone tecnico sera local-first e nao inclui sync remoto, OAuth ou infraestrutura externa.
-O primeiro milestone executavel ja cobre quadro local unico, persistencia em SQLite, drag and drop e always-on-top.
+A documentacao deste repositorio serve para estabelecer direcao enquanto a implementacao ainda amadurece.
+O milestone tecnico atual continua local-first e nao inclui sync remoto, OAuth ou infraestrutura externa.
+O milestone executavel atual ja cobre multiplos quadros locais, colunas especificas por quadro, reordenacao e movimento de colunas entre quadros, persistencia em SQLite, drag and drop e always-on-top.
 
 ## Direcao do Produto
 
@@ -38,7 +38,7 @@ O primeiro milestone executavel ja cobre quadro local unico, persistencia em SQL
 
 - Manter o stack desktop local: Electron, React + TypeScript, `better-sqlite3`, Zustand, Tailwind CSS e `dnd-kit`
 - Deixar Google Drive sync, OAuth e infraestrutura remota fora do primeiro scaffold
-- Focar o primeiro milestone em quadro local unico, 3 colunas, drag and drop, persistencia em SQLite e always-on-top
+- Focar o milestone atual em um workspace totalmente local com multiplos quadros, colunas especificas por quadro, rename inline de colunas, drag and drop de colunas, persistencia em SQLite e always-on-top
 - Tratar sync como capability posterior, nao como requisito do bootstrap
 
 ## Desenvolvimento Local
@@ -107,8 +107,8 @@ A estrutura abaixo esta planejada, mas ainda nao foi implementada.
 
 Para o roadmap detalhado, veja [`ROADMAP.md`](./ROADMAP.md).
 
-- MVP: quadro unico, 3 colunas, drag and drop, persistencia em SQLite, always-on-top
-- Fase 2: multiplos quadros, sync com Google Drive, system tray, temas
+- MVP: workspace local, multiplos quadros, colunas customizaveis, drag and drop de colunas, persistencia em SQLite, always-on-top
+- Fase 2: sync com Google Drive, system tray, temas
 - Futuro: campos customizados, notificacoes, resolucao avancada de conflitos, app mobile complementar
 
 ## Documentos do Repositorio

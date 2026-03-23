@@ -1,8 +1,19 @@
 import { create } from 'zustand'
-import type { BoardRecord, BoardDraft, CardDraft, CardRecord } from '@shared/types'
+import type {
+  BoardDraft,
+  BoardRecord,
+  BoardSummary,
+  CardDraft,
+  CardRecord,
+  ColumnDraft,
+  ColumnMovePayload,
+  WorkspaceRecord
+} from '@shared/types'
 
 interface BoardState {
-  board: BoardRecord | null
+  boards: BoardSummary[]
+  activeBoardId: string | null
+  activeBoard: BoardRecord | null
   alwaysOnTop: boolean
   isMaximized: boolean
   platform: string
@@ -11,7 +22,14 @@ interface BoardState {
   error: string | null
   editingCard: CardRecord | null
   initialize: () => Promise<void>
-  updateBoard: (draft: BoardDraft) => Promise<void>
+  createBoard: (draft: BoardDraft) => Promise<void>
+  updateBoard: (boardId: string, draft: BoardDraft) => Promise<void>
+  deleteBoard: (boardId: string) => Promise<void>
+  setActiveBoard: (boardId: string) => Promise<void>
+  createColumn: (boardId: string, draft: ColumnDraft) => Promise<void>
+  updateColumn: (columnId: string, draft: ColumnDraft) => Promise<void>
+  deleteColumn: (columnId: string) => Promise<void>
+  moveColumn: (payload: ColumnMovePayload) => Promise<void>
   createCard: (columnId: string, draft: CardDraft) => Promise<void>
   updateCard: (cardId: string, draft: CardDraft) => Promise<void>
   deleteCard: (cardId: string) => Promise<void>
@@ -23,8 +41,18 @@ interface BoardState {
   closeWindow: () => Promise<void>
 }
 
+function applyWorkspace(workspace: WorkspaceRecord): Pick<BoardState, 'boards' | 'activeBoardId' | 'activeBoard'> {
+  return {
+    boards: workspace.boards,
+    activeBoardId: workspace.activeBoardId,
+    activeBoard: workspace.activeBoard
+  }
+}
+
 export const useBoardStore = create<BoardState>((set) => ({
-  board: null,
+  boards: [],
+  activeBoardId: null,
+  activeBoard: null,
   alwaysOnTop: false,
   isMaximized: false,
   platform: 'unknown',
@@ -36,13 +64,13 @@ export const useBoardStore = create<BoardState>((set) => ({
     set({ loading: true, error: null })
 
     try {
-      const [board, windowState] = await Promise.all([
-        window.stickban.getBoard(),
+      const [workspace, windowState] = await Promise.all([
+        window.stickban.getWorkspace(),
         window.stickban.getWindowState()
       ])
 
       set({
-        board,
+        ...applyWorkspace(workspace),
         alwaysOnTop: windowState.alwaysOnTop,
         isMaximized: windowState.isMaximized,
         platform: windowState.platform,
@@ -55,64 +83,112 @@ export const useBoardStore = create<BoardState>((set) => ({
       })
     }
   },
+  createBoard: async (draft) => {
+    set({ saving: true, error: null })
+    try {
+      const workspace = await window.stickban.createBoard(draft)
+      set({ ...applyWorkspace(workspace), saving: false, editingCard: null })
+    } catch (error) {
+      set({ saving: false, error: error instanceof Error ? error.message : 'Failed to create board' })
+    }
+  },
+  updateBoard: async (boardId, draft) => {
+    set({ saving: true, error: null })
+    try {
+      const workspace = await window.stickban.updateBoard(boardId, draft)
+      set({ ...applyWorkspace(workspace), saving: false })
+    } catch (error) {
+      set({ saving: false, error: error instanceof Error ? error.message : 'Failed to update board' })
+    }
+  },
+  deleteBoard: async (boardId) => {
+    set({ saving: true, error: null })
+    try {
+      const workspace = await window.stickban.deleteBoard(boardId)
+      set({ ...applyWorkspace(workspace), saving: false, editingCard: null })
+    } catch (error) {
+      set({ saving: false, error: error instanceof Error ? error.message : 'Failed to delete board' })
+    }
+  },
+  setActiveBoard: async (boardId) => {
+    set({ saving: true, error: null })
+    try {
+      const workspace = await window.stickban.setActiveBoard(boardId)
+      set({ ...applyWorkspace(workspace), saving: false, editingCard: null })
+    } catch (error) {
+      set({ saving: false, error: error instanceof Error ? error.message : 'Failed to switch board' })
+    }
+  },
+  createColumn: async (boardId, draft) => {
+    set({ saving: true, error: null })
+    try {
+      const workspace = await window.stickban.createColumn(boardId, draft)
+      set({ ...applyWorkspace(workspace), saving: false })
+    } catch (error) {
+      set({ saving: false, error: error instanceof Error ? error.message : 'Failed to create column' })
+    }
+  },
+  updateColumn: async (columnId, draft) => {
+    set({ saving: true, error: null })
+    try {
+      const workspace = await window.stickban.updateColumn(columnId, draft)
+      set({ ...applyWorkspace(workspace), saving: false })
+    } catch (error) {
+      set({ saving: false, error: error instanceof Error ? error.message : 'Failed to update column' })
+    }
+  },
+  deleteColumn: async (columnId) => {
+    set({ saving: true, error: null })
+    try {
+      const workspace = await window.stickban.deleteColumn(columnId)
+      set({ ...applyWorkspace(workspace), saving: false })
+    } catch (error) {
+      set({ saving: false, error: error instanceof Error ? error.message : 'Failed to delete column' })
+    }
+  },
+  moveColumn: async (payload) => {
+    set({ saving: true, error: null })
+    try {
+      const workspace = await window.stickban.moveColumn(payload)
+      set({ ...applyWorkspace(workspace), saving: false })
+    } catch (error) {
+      set({ saving: false, error: error instanceof Error ? error.message : 'Failed to move column' })
+    }
+  },
   createCard: async (columnId, draft) => {
     set({ saving: true, error: null })
     try {
-      const board = await window.stickban.createCard(columnId, draft)
-      set({ board, saving: false })
+      const workspace = await window.stickban.createCard(columnId, draft)
+      set({ ...applyWorkspace(workspace), saving: false })
     } catch (error) {
-      set({
-        saving: false,
-        error: error instanceof Error ? error.message : 'Failed to create card'
-      })
-    }
-  },
-  updateBoard: async (draft) => {
-    set({ saving: true, error: null })
-    try {
-      const board = await window.stickban.updateBoard(draft)
-      set({ board, saving: false })
-    } catch (error) {
-      set({
-        saving: false,
-        error: error instanceof Error ? error.message : 'Failed to update board'
-      })
+      set({ saving: false, error: error instanceof Error ? error.message : 'Failed to create card' })
     }
   },
   updateCard: async (cardId, draft) => {
     set({ saving: true, error: null })
     try {
-      const board = await window.stickban.updateCard(cardId, draft)
-      set({ board, saving: false, editingCard: null })
+      const workspace = await window.stickban.updateCard(cardId, draft)
+      set({ ...applyWorkspace(workspace), saving: false, editingCard: null })
     } catch (error) {
-      set({
-        saving: false,
-        error: error instanceof Error ? error.message : 'Failed to update card'
-      })
+      set({ saving: false, error: error instanceof Error ? error.message : 'Failed to update card' })
     }
   },
   deleteCard: async (cardId) => {
     set({ saving: true, error: null })
     try {
-      const board = await window.stickban.deleteCard(cardId)
-      set({ board, saving: false })
+      const workspace = await window.stickban.deleteCard(cardId)
+      set({ ...applyWorkspace(workspace), saving: false })
     } catch (error) {
-      set({
-        saving: false,
-        error: error instanceof Error ? error.message : 'Failed to delete card'
-      })
+      set({ saving: false, error: error instanceof Error ? error.message : 'Failed to delete card' })
     }
   },
   moveCard: async (cardId, toColumnId, toIndex) => {
     set({ saving: true, error: null })
     try {
-      const board = await window.stickban.moveCard({ cardId, toColumnId, toIndex })
-      set({ board, saving: false })
+      const workspace = await window.stickban.moveCard({ cardId, toColumnId, toIndex })
+      set({ ...applyWorkspace(workspace), saving: false })
     } catch (error) {
-      set({
-        saving: false,
-        error: error instanceof Error ? error.message : 'Failed to move card'
-      })
+      set({ saving: false, error: error instanceof Error ? error.message : 'Failed to move card' })
     }
   },
   setEditingCard: (card) => set({ editingCard: card }),

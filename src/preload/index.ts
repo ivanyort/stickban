@@ -1,9 +1,24 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { BoardDraft, CardDraft, CardMovePayload, StickbanApi } from '../shared/types'
+import type {
+  BoardDraft,
+  CardDraft,
+  CardMovePayload,
+  ColumnDraft,
+  ColumnMovePayload,
+  StickbanApi
+} from '../shared/types'
 
 const api: StickbanApi = {
-  getBoard: () => ipcRenderer.invoke('board:get'),
-  updateBoard: (draft: BoardDraft) => ipcRenderer.invoke('board:update', draft),
+  getWorkspace: () => ipcRenderer.invoke('workspace:get'),
+  createBoard: (draft: BoardDraft) => ipcRenderer.invoke('board:create', draft),
+  updateBoard: (boardId: string, draft: BoardDraft) => ipcRenderer.invoke('board:update', boardId, draft),
+  deleteBoard: (boardId: string) => ipcRenderer.invoke('board:delete', boardId),
+  setActiveBoard: (boardId: string) => ipcRenderer.invoke('board:setActive', boardId),
+  createColumn: (boardId: string, draft: ColumnDraft) => ipcRenderer.invoke('column:create', boardId, draft),
+  updateColumn: (columnId: string, draft: ColumnDraft) =>
+    ipcRenderer.invoke('column:update', columnId, draft),
+  deleteColumn: (columnId: string) => ipcRenderer.invoke('column:delete', columnId),
+  moveColumn: (payload: ColumnMovePayload) => ipcRenderer.invoke('column:move', payload),
   createCard: (columnId: string, draft: CardDraft) => ipcRenderer.invoke('card:create', columnId, draft),
   updateCard: (cardId: string, draft: CardDraft) => ipcRenderer.invoke('card:update', cardId, draft),
   deleteCard: (cardId: string) => ipcRenderer.invoke('card:delete', cardId),

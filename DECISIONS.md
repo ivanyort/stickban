@@ -128,8 +128,8 @@
   The project should be implementable locally without paid services, subscriptions, cloud infrastructure, or unnecessary early complexity.
   O projeto deve ser implementavel localmente sem servicos pagos, assinaturas, infraestrutura cloud ou complexidade prematura desnecessaria.
 - Decision / Decisao:
-  Keep the initial scaffold focused on Electron, React + TypeScript, local SQLite via `better-sqlite3`, Zustand, Tailwind CSS, and `dnd-kit`, with a single local board, three columns, drag and drop, SQLite persistence, and always-on-top behavior. Exclude Google Drive sync, OAuth, and remote infrastructure from the first milestone.
-  Manter o scaffold inicial focado em Electron, React + TypeScript, SQLite local via `better-sqlite3`, Zustand, Tailwind CSS e `dnd-kit`, com um quadro local unico, tres colunas, drag and drop, persistencia em SQLite e comportamento always-on-top. Deixar Google Drive sync, OAuth e infraestrutura remota fora do primeiro milestone.
+  Keep the initial scaffold focused on Electron, React + TypeScript, local SQLite via `better-sqlite3`, Zustand, Tailwind CSS, and `dnd-kit`, with a fully local workspace, persisted boards, board-specific columns, drag and drop, SQLite persistence, and always-on-top behavior. Exclude Google Drive sync, OAuth, and remote infrastructure from the first milestone.
+  Manter o scaffold inicial focado em Electron, React + TypeScript, SQLite local via `better-sqlite3`, Zustand, Tailwind CSS e `dnd-kit`, com um workspace totalmente local, quadros persistidos, colunas especificas por quadro, drag and drop, persistencia em SQLite e comportamento always-on-top. Deixar Google Drive sync, OAuth e infraestrutura remota fora do primeiro milestone.
 - Consequences / Consequencias:
   The first implementation milestone remains local-only and cost-free to develop and run, while remote synchronization stays as a later phase capability.
   O primeiro milestone de implementacao permanece apenas local e sem custo para desenvolver e executar, enquanto a sincronizacao remota permanece como capability de fase posterior.
@@ -161,6 +161,20 @@
 - Consequences / Consequencias:
   The desktop app and public site can evolve independently, forks can still build the landing locally, and only the official repository is allowed to publish the canonical public site.
   O app desktop e o site publico podem evoluir de forma independente, forks continuam podendo buildar a landing localmente, e apenas o repositorio oficial pode publicar o site publico canonico.
+
+## D-012: Local Workspace Model
+
+- Date / Data: 2026-03-23
+- Status: accepted
+- Context / Contexto:
+  The updated interaction model now includes multiple boards, and the application needs to persist board navigation and board-specific structure without introducing sync or cloud dependencies.
+  O modelo de interacao atualizado agora inclui multiplos quadros, e a aplicacao precisa persistir a navegacao entre quadros e a estrutura especifica de cada quadro sem introduzir sync ou dependencias cloud.
+- Decision / Decisao:
+  Treat Stickban as a local workspace made of multiple persisted boards. Persist the active board selection in local app state, and make columns board-specific and customizable from this milestone onward.
+  Tratar o Stickban como um workspace local composto por multiplos quadros persistidos. Persistir a selecao do quadro ativo em estado local da aplicacao e tornar as colunas especificas por quadro e customizaveis a partir deste milestone.
+- Consequences / Consequencias:
+  The SQLite layer, IPC, preload API, renderer store, and header navigation all become workspace-aware. Multiple boards are no longer a later roadmap item, while remote sync still remains a separate future capability.
+  A camada SQLite, o IPC, a API do preload, o store do renderer e a navegacao do cabecalho passam a conhecer o workspace. Multiplos quadros deixam de ser item de roadmap posterior, enquanto o sync remoto continua sendo uma capability futura separada.
 
 ## Notes / Notas
 

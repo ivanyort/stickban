@@ -12,9 +12,9 @@ Stickban is a desktop Kanban application focused on speed, low friction, and con
 
 This repository is in bootstrap stage. The product specification exists in [`SPEC.md`](./SPEC.md), and the first runnable application scaffold is now in place.
 
-The documentation in this repository is intended to establish direction before implementation starts.
-The initial technical milestone is local-first and does not include remote sync, OAuth, or external infrastructure.
-The first runnable milestone already covers a single local board, SQLite persistence, drag and drop, and always-on-top behavior.
+The documentation in this repository is intended to establish direction while implementation is still maturing.
+The current technical milestone remains local-first and does not include remote sync, OAuth, or external infrastructure.
+The current runnable milestone already covers multiple local boards, board-specific columns, column reordering and cross-board moves, SQLite persistence, drag and drop, and always-on-top behavior.
 
 ## Product Direction
 
@@ -38,7 +38,7 @@ The first runnable milestone already covers a single local board, SQLite persist
 
 - Keep the local desktop stack: Electron, React + TypeScript, `better-sqlite3`, Zustand, Tailwind CSS, and `dnd-kit`
 - Exclude Google Drive sync, OAuth, and remote infrastructure from the first scaffold
-- Focus the first milestone on a single local board, 3 columns, drag and drop, SQLite persistence, and always-on-top behavior
+- Focus the current milestone on a fully local workspace with multiple boards, board-specific columns, inline column rename, column drag and drop, SQLite persistence, and always-on-top behavior
 - Treat sync as a later capability, not as a bootstrap requirement
 
 ## Local Development
@@ -107,8 +107,8 @@ The structure below is planned, not implemented yet.
 
 For the detailed roadmap, see [`ROADMAP.md`](./ROADMAP.md).
 
-- MVP: single board, 3 columns, drag and drop, SQLite persistence, always-on-top
-- Phase 2: multiple boards, Google Drive sync, system tray, themes
+- MVP: local workspace, multiple boards, customizable columns, column drag and drop, SQLite persistence, always-on-top
+- Phase 2: Google Drive sync, system tray, themes
 - Future: custom fields, notifications, advanced conflict resolution, mobile companion
 
 ## Repository Documents

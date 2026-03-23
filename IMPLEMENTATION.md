@@ -23,29 +23,33 @@ This document tracks the real implementation state of the repository and the hig
 - Public README split into English and Brazilian Portuguese versions
 - Initial Electron/React/TypeScript scaffold delivered
 - Local SQLite persistence layer delivered
-- Single-board drag-and-drop UI delivered
+- Local drag-and-drop workspace delivered
 - Renderer UI aligned to the `references/frontend_v001` visual direction, including card action menu support
 - Renderer now uses local Geist font assets and native column-based drag-and-drop to better match `references/frontend_v001`
 - Electron window now uses custom top-bar controls for close, minimize, and maximize/restore
 - Desktop window chrome now uses platform-specific native behavior: Windows uses `titleBarStyle: hidden` with `titleBarOverlay` for native window controls without the traditional title bar, while Linux keeps a frameless window with custom controls in the renderer
 - Board title edits in the header now persist through SQLite instead of living only in renderer state
+- Multiple boards now exist as first-class persisted entities, with active board selection restored across app restarts
+- Columns are now board-specific and customizable, including create, rename, and delete flows in the renderer
+- Columns now support inline rename on click, drag-and-drop reordering inside the active board, and moving an entire column to another board through board-tab drop targets
 - GitHub release/version automation configured for `main`
 - Windows release packaging simplified to NSIS installer only
 - Public GitHub Releases currently publish Windows artifacts only
 - Public landing page scaffold delivered under `site/`
 - GitHub Pages deployment workflow configured with repository-level fork protection
+- Windows packaging now points to the curated icon kit under `logos/ico_kit`, using a generated `256x256+` `.ico` asset derived from the kit's square icon as the installer/app icon source
 
 ## Current Implementation Focus
 
 - The current codebase implements the first local-only milestone
-- The next major step is hardening and manual validation before committing the scaffold
+- The current milestone now includes multiple boards and custom columns inside the local workspace
+- The next major step is hardening and manual validation before remote sync is introduced
 - The initial scaffold should be usable without subscriptions, paid services, or cloud dependencies
 
 ## Not Implemented Yet
 
 - Synchronization layer
 - Release workflow validation on GitHub Actions
-- Multi-board support
 - DNS validation for `stickban.com`
 
 ## Notes

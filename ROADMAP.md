@@ -17,8 +17,8 @@ Status: `in progress`
 
 Goals and milestones:
 
-- Single board experience for the desktop
-- Three default columns for core task flow
+- Local workspace experience for the desktop
+- Multiple boards with board-specific columns
 - Drag and drop movement for cards
 - Local SQLite persistence
 - Always-on-top support
@@ -36,7 +36,6 @@ Status: `planned`
 
 Goals and milestones:
 
-- Multiple boards
 - Google Drive synchronization
 - System tray integration
 - Theme support

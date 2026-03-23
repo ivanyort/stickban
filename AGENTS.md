@@ -83,10 +83,13 @@ Agents should stay aligned with these project-level decisions:
 10. Update Markdown documentation as part of every relevant delivery.
    If a change affects workflow, architecture, setup, scope, or repository conventions, update the affected `.md` files in the same delivery.
 
-11. Preserve the repository's AI-first development model.
+11. Update the public site whenever a relevant delivery changes public project reality.
+   If a change affects product capabilities, public positioning, release expectations, or repository status that is reflected in `site/`, update the landing page content in the same delivery.
+
+12. Preserve the repository's AI-first development model.
    Prefer implementation and maintenance through compatible AI-assisted tools and agents when possible, while allowing manual code edits as a complementary path when they are the better fit.
 
-12. Treat AI output as material that still requires technical validation.
+13. Treat AI output as material that still requires technical validation.
     Expected use of AI does not remove the need to review correctness, safety, maintainability, and repository alignment.
 
 ## Documentation Expectations / Expectativas de Documentacao
@@ -96,6 +99,7 @@ Agents should stay aligned with these project-level decisions:
 
 Avoid copying large sections from `SPEC.md`. Prefer linking back to the spec and summarizing only what is necessary.
 Keep AI workflow policy and public transparency notes consistent across `README.md` and `README.pt-BR.md` when they change.
+Treat `.md` files and the public site under `site/` as mandatory synchronization targets whenever the delivery changes public-facing capabilities or project reality.
 Do not record completed implementation work in `ROADMAP.md`, and do not use `IMPLEMENTATION.md` as a backlog for future work.
 Do not introduce paid dependencies or cloud requirements into the initial scaffold unless the repository decisions are updated first.
 Treat commit conventions as release semantics, because pushes to `main` are expected to trigger automatic SemVer-based releases.
