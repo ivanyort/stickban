@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   CloudOff,
   GripVertical,
@@ -60,14 +60,34 @@ function App(): JSX.Element {
   } = useBoardStore()
   const [editingBoardId, setEditingBoardId] = useState<string | null>(null)
   const [editingBoardTitle, setEditingBoardTitle] = useState('')
-  const [draggedTask, setDraggedTask] = useState<{ taskId: string; columnId: string } | null>(null)
+  const [taskDragCandidate, setTaskDragCandidate] = useState<{
+    taskId: string
+    columnId: string
+    startX: number
+    startY: number
+    offsetX: number
+    offsetY: number
+  } | null>(null)
+  const [draggedTask, setDraggedTask] = useState<{
+    taskId: string
+    columnId: string
+    offsetX: number
+    offsetY: number
+  } | null>(null)
+  const [draggedTaskPointer, setDraggedTaskPointer] = useState<{ x: number; y: number } | null>(null)
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
+  const [dragOverTaskPosition, setDragOverTaskPosition] = useState<{
+    columnId: string
+    index: number
+  } | null>(null)
   const [draggedColumn, setDraggedColumn] = useState<{ columnId: string; boardId: string } | null>(null)
+  const [draggedColumnPointer, setDraggedColumnPointer] = useState<{ x: number; y: number } | null>(null)
   const [dragOverColumnPosition, setDragOverColumnPosition] = useState<{
     columnId: string
     position: 'left' | 'right'
   } | null>(null)
   const [dragOverBoardId, setDragOverBoardId] = useState<string | null>(null)
+  const cardListRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   useEffect(() => {
     void initialize()
@@ -80,9 +100,121 @@ function App(): JSX.Element {
     }
   }, [boards, editingBoardId])
 
+  useEffect(() => {
+    if (!taskDragCandidate && !draggedTask) {
+      return
+    }
+
+    const updateTaskDropTarget = (clientX: number, clientY: number, draggingTaskId: string): void => {
+      const target = document.elementFromPoint(clientX, clientY) as HTMLElement | null
+      const columnList = target?.closest('[data-card-list-column-id]') as HTMLElement | null
+
+      if (!columnList) {
+        setDragOverColumn(null)
+        setDragOverTaskPosition(null)
+        return
+      }
+
+      const targetColumnId = columnList.dataset.cardListColumnId
+      if (!targetColumnId) {
+        setDragOverColumn(null)
+        setDragOverTaskPosition(null)
+        return
+      }
+
+      const cardElements = Array.from(columnList.querySelectorAll<HTMLElement>('[data-task-card="true"]')).filter(
+        (element) => element.dataset.taskCardId !== draggingTaskId
+      )
+
+      let nextIndex = cardElements.length
+      for (let index = 0; index < cardElements.length; index += 1) {
+        const rect = cardElements[index].getBoundingClientRect()
+        const midpoint = rect.top + rect.height / 2
+        if (clientY < midpoint) {
+          nextIndex = index
+          break
+        }
+      }
+
+      setDragOverColumn(targetColumnId)
+      setDragOverTaskPosition({ columnId: targetColumnId, index: nextIndex })
+    }
+
+    const handlePointerMove = (event: PointerEvent): void => {
+      if (taskDragCandidate && !draggedTask) {
+        const distance = Math.hypot(event.clientX - taskDragCandidate.startX, event.clientY - taskDragCandidate.startY)
+        if (distance < 4) {
+          return
+        }
+
+        setDraggedTask({
+          taskId: taskDragCandidate.taskId,
+          columnId: taskDragCandidate.columnId,
+          offsetX: taskDragCandidate.offsetX,
+          offsetY: taskDragCandidate.offsetY
+        })
+        setDraggedTaskPointer({ x: event.clientX, y: event.clientY })
+        updateTaskDropTarget(event.clientX, event.clientY, taskDragCandidate.taskId)
+        return
+      }
+
+      if (draggedTask) {
+        setDraggedTaskPointer({ x: event.clientX, y: event.clientY })
+        updateTaskDropTarget(event.clientX, event.clientY, draggedTask.taskId)
+      }
+    }
+
+    const handlePointerUp = (): void => {
+      if (draggedTask && dragOverTaskPosition) {
+        const nextIndex = dragOverTaskPosition.index
+        void moveCard(draggedTask.taskId, dragOverTaskPosition.columnId, nextIndex)
+      }
+
+      setTaskDragCandidate(null)
+      setDraggedTask(null)
+      setDraggedTaskPointer(null)
+      setDragOverColumn(null)
+      setDragOverTaskPosition(null)
+    }
+
+    const previousUserSelect = document.body.style.userSelect
+    document.body.style.userSelect = 'none'
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
+
+    return () => {
+      document.body.style.userSelect = previousUserSelect
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
+    }
+  }, [taskDragCandidate, draggedTask, dragOverTaskPosition, moveCard])
+
+  useEffect(() => {
+    if (!draggedColumn) {
+      return
+    }
+
+    const handleWindowDragOver = (event: DragEvent): void => {
+      setDraggedColumnPointer({ x: event.clientX, y: event.clientY })
+    }
+
+    window.addEventListener('dragover', handleWindowDragOver)
+    return () => {
+      window.removeEventListener('dragover', handleWindowDragOver)
+    }
+  }, [draggedColumn])
+
   const orderedColumns = useMemo(
     () => activeBoard?.columns.slice().sort((a, b) => a.position - b.position) ?? [],
     [activeBoard]
+  )
+  const draggedColumnRecord = useMemo(
+    () => activeBoard?.columns.find((column) => column.id === draggedColumn?.columnId) ?? null,
+    [activeBoard, draggedColumn]
+  )
+  const draggedTaskRecord = useMemo(
+    () => activeBoard?.columns.flatMap((column) => column.cards).find((card) => card.id === draggedTask?.taskId) ?? null,
+    [activeBoard, draggedTask]
   )
 
   if (loading) {
@@ -154,41 +286,30 @@ function App(): JSX.Element {
     }
   }
 
-  const handleDragStart = (taskId: string, columnId: string): void => {
-    setDraggedTask({ taskId, columnId })
-  }
-
-  const handleDragOver = (event: React.DragEvent, columnId: string): void => {
-    event.preventDefault()
-    setDragOverColumn(columnId)
-  }
-
-  const handleDragLeave = (): void => {
-    setDragOverColumn(null)
-  }
-
-  const handleDrop = (event: React.DragEvent, targetColumnId: string): void => {
-    event.preventDefault()
-    setDragOverColumn(null)
-
-    if (!draggedTask || draggedTask.columnId === targetColumnId) {
-      setDraggedTask(null)
+  const handleTaskPointerDown = (
+    event: React.PointerEvent<HTMLDivElement>,
+    taskId: string,
+    columnId: string
+  ): void => {
+    if (event.button !== 0) {
       return
     }
 
-    const targetColumn = orderedColumns.find((column) => column.id === targetColumnId)
-    if (!targetColumn) {
-      setDraggedTask(null)
+    const target = event.target as HTMLElement
+    if (target.closest('button, input, textarea, [role="menuitem"]')) {
       return
     }
 
-    void moveCard(draggedTask.taskId, targetColumnId, targetColumn.cards.length)
-    setDraggedTask(null)
-  }
-
-  const handleDragEnd = (): void => {
-    setDraggedTask(null)
-    setDragOverColumn(null)
+    const rect = event.currentTarget.getBoundingClientRect()
+    event.preventDefault()
+    setTaskDragCandidate({
+      taskId,
+      columnId,
+      startX: event.clientX,
+      startY: event.clientY,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top
+    })
   }
 
   const handleColumnDragStart = (columnId: string, boardId: string): void => {
@@ -228,14 +349,19 @@ function App(): JSX.Element {
     const target = event.currentTarget as HTMLElement | null
     const rect = target?.getBoundingClientRect()
     const insertAfter = rect ? event.clientX >= rect.left + rect.width / 2 : false
+    const sourceIndex = orderedColumns.findIndex((column) => column.id === sourceColumnId)
     const targetIndex = orderedColumns.findIndex((column) => column.id === targetColumnId)
 
-    if (targetIndex === -1) {
+    if (sourceIndex === -1 || targetIndex === -1) {
       setDraggedColumn(null)
       return
     }
 
-    const nextIndex = targetIndex + (insertAfter ? 1 : 0)
+    let nextIndex = targetIndex + (insertAfter ? 1 : 0)
+    if (draggedColumn.boardId === targetBoardId && sourceIndex < targetIndex) {
+      nextIndex -= 1
+    }
+
     void (async () => {
       await moveColumn({ columnId: sourceColumnId, toBoardId: targetBoardId, toIndex: nextIndex })
       if (activeBoardId !== targetBoardId) {
@@ -250,6 +376,7 @@ function App(): JSX.Element {
     setDraggedColumn(null)
     setDragOverColumnPosition(null)
     setDragOverBoardId(null)
+    setDraggedColumnPointer(null)
   }
 
   const handleBoardTabDragOver = (event: React.DragEvent, boardId: string): void => {
@@ -292,6 +419,16 @@ function App(): JSX.Element {
   return (
     <div className="flex h-screen flex-col bg-background">
       {platform === 'win32' ? <div className="pointer-events-none fixed inset-x-0 top-14 z-40 h-px bg-border" /> : null}
+      {draggedTaskRecord && draggedTaskPointer ? (
+        <TaskDragGhost
+          card={draggedTaskRecord}
+          offset={draggedTask ? { x: draggedTask.offsetX, y: draggedTask.offsetY } : { x: 24, y: 20 }}
+          pointer={draggedTaskPointer}
+        />
+      ) : null}
+      {draggedColumnRecord && draggedColumnPointer ? (
+        <ColumnDragGhost column={draggedColumnRecord} pointer={draggedColumnPointer} />
+      ) : null}
       <header
         className={cn(
           'relative flex h-14 shrink-0 items-center justify-between gap-4 bg-card px-4',
@@ -432,12 +569,14 @@ function App(): JSX.Element {
             dragOverColumn={dragOverColumn}
             dragOverColumnPosition={dragOverColumnPosition}
             draggedTaskId={draggedTask?.taskId ?? null}
+            dragOverTaskPosition={dragOverTaskPosition}
             key={column.id}
             onAddCard={(draft) => void createCard(column.id, draft)}
             onColumnDragEnd={handleColumnDragEnd}
             onColumnDragLeave={handleColumnDragLeave}
             onColumnDragOver={handleColumnDragOver}
             onColumnDragStart={handleColumnDragStart}
+            onColumnDragPointerMove={setDraggedColumnPointer}
             onColumnDrop={handleColumnDrop}
             onDeleteCard={(cardId) => void deleteCard(cardId)}
             onDeleteColumn={(columnToDelete) => {
@@ -451,11 +590,11 @@ function App(): JSX.Element {
                 void deleteColumn(columnToDelete.id)
               }
             }}
-            onDragEnd={handleDragEnd}
-            onDragLeave={handleDragLeave}
-            onDragOver={handleDragOver}
-            onDragStart={handleDragStart}
-            onDrop={handleDrop}
+            draggedTaskColumnId={draggedTask?.columnId ?? null}
+            onTaskListRef={(node) => {
+              cardListRefs.current[column.id] = node
+            }}
+            onTaskPointerDown={handleTaskPointerDown}
             onEditCard={setEditingCard}
             onRenameColumn={(columnId, draft) => void updateColumn(columnId, { title: draft })}
           />
@@ -604,19 +743,19 @@ function BoardColumn({
   dragOverColumn,
   dragOverColumnPosition,
   draggedTaskId,
+  draggedTaskColumnId,
+  dragOverTaskPosition,
   onAddCard,
   onColumnDragEnd,
   onColumnDragLeave,
   onColumnDragOver,
   onColumnDragStart,
+  onColumnDragPointerMove,
   onColumnDrop,
   onDeleteCard,
   onDeleteColumn,
-  onDragEnd,
-  onDragLeave,
-  onDragOver,
-  onDragStart,
-  onDrop,
+  onTaskListRef,
+  onTaskPointerDown,
   onEditCard,
   onRenameColumn
 }: {
@@ -627,19 +766,19 @@ function BoardColumn({
   dragOverColumn: string | null
   dragOverColumnPosition: { columnId: string; position: 'left' | 'right' } | null
   draggedTaskId: string | null
+  draggedTaskColumnId: string | null
+  dragOverTaskPosition: { columnId: string; index: number } | null
   onAddCard: (draft: CardDraft) => void
   onColumnDragEnd: () => void
   onColumnDragLeave: () => void
   onColumnDragOver: (event: React.DragEvent, columnId: string) => void
   onColumnDragStart: (columnId: string, boardId: string) => void
+  onColumnDragPointerMove: (pointer: { x: number; y: number } | null) => void
   onColumnDrop: (event: React.DragEvent, targetColumnId: string, targetBoardId: string) => void
   onDeleteCard: (cardId: string) => void
   onDeleteColumn: (column: ColumnRecord) => void
-  onDragEnd: () => void
-  onDragLeave: () => void
-  onDragOver: (event: React.DragEvent, columnId: string) => void
-  onDragStart: (taskId: string, columnId: string) => void
-  onDrop: (event: React.DragEvent, targetColumnId: string) => void
+  onTaskListRef: (node: HTMLDivElement | null) => void
+  onTaskPointerDown: (event: React.PointerEvent<HTMLDivElement>, taskId: string, columnId: string) => void
   onEditCard: (card: CardRecord) => void
   onRenameColumn: (columnId: string, title: string) => void
 }): JSX.Element {
@@ -648,6 +787,7 @@ function BoardColumn({
   const [description, setDescription] = useState('')
   const [isEditingColumn, setIsEditingColumn] = useState(false)
   const [columnTitle, setColumnTitle] = useState(column.title)
+  const columnRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     setColumnTitle(column.title)
@@ -670,18 +810,27 @@ function BoardColumn({
     setIsEditingColumn(false)
   }
 
+  const submitNewCard = (): void => {
+    if (!title.trim()) {
+      return
+    }
+
+    onAddCard({ title, description })
+    setTitle('')
+    setDescription('')
+    setIsAdding(false)
+  }
+
   return (
     <div
-      draggable
-      onDragEnd={onColumnDragEnd}
+      ref={columnRef}
       onDragLeave={onColumnDragLeave}
       onDragOver={(event) => onColumnDragOver(event, column.id)}
-      onDragStart={() => onColumnDragStart(column.id, boardId)}
       onDrop={(event) => onColumnDrop(event, column.id, boardId)}
       className={cn(
         'relative flex w-72 shrink-0 flex-col rounded-xl border border-border bg-column p-3 transition-all duration-200',
         dragOverColumn === column.id && 'border-primary/50 bg-primary/5 ring-2 ring-primary/20',
-        draggedColumnId === column.id && 'opacity-60'
+        draggedColumnId === column.id && 'scale-[0.985] opacity-35'
       )}
     >
       {dragOverColumnPosition?.columnId === column.id ? (
@@ -693,7 +842,27 @@ function BoardColumn({
         />
       ) : null}
 
-      <div className="mb-3 flex items-center justify-between gap-2">
+      <div
+        draggable={!isEditingColumn}
+        onDragEnd={onColumnDragEnd}
+        onDragStart={(event) => {
+          const transparentPixel = document.createElement('canvas')
+          transparentPixel.width = 1
+          transparentPixel.height = 1
+          event.dataTransfer?.setDragImage(transparentPixel, 0, 0)
+          onColumnDragPointerMove({ x: event.clientX, y: event.clientY })
+          const columnElement = columnRef.current
+          if (columnElement) {
+            const rect = columnElement.getBoundingClientRect()
+            onColumnDragPointerMove({
+              x: event.clientX - (event.clientX - rect.left) + 24,
+              y: event.clientY - (event.clientY - rect.top) + 20
+            })
+          }
+          onColumnDragStart(column.id, boardId)
+        }}
+        className="mb-3 flex cursor-grab items-center justify-between gap-2 active:cursor-grabbing"
+      >
         <div className="flex min-w-0 items-center gap-2">
           {isEditingColumn ? (
             <Input
@@ -773,11 +942,18 @@ function BoardColumn({
       </div>
 
       <div
+        ref={onTaskListRef}
+        data-card-list-column-id={column.id}
         className="flex flex-1 flex-col gap-2 overflow-y-auto"
-        onDragLeave={onDragLeave}
-        onDragOver={(event) => onDragOver(event, column.id)}
-        onDrop={(event) => onDrop(event, column.id)}
       >
+        {column.cards.length > 0 &&
+        dragOverTaskPosition?.columnId === column.id &&
+        dragOverTaskPosition.index === 0 ? (
+          <div className="relative h-0 shrink-0">
+            <div className="absolute inset-x-0 top-0 h-0.5 rounded-full bg-primary" />
+          </div>
+        ) : null}
+
         {column.cards.length === 0 && !isAdding ? (
           <div className="flex flex-1 flex-col items-center justify-center rounded-lg border-2 border-dashed border-border/60 py-8 text-center">
             <p className="text-xs text-muted-foreground">No tasks yet</p>
@@ -799,14 +975,31 @@ function BoardColumn({
           <TaskCard
             card={card}
             draggedTaskId={draggedTaskId}
+            dragOverTaskPosition={
+              dragOverTaskPosition?.columnId === column.id &&
+              dragOverTaskPosition.index > 0 &&
+              dragOverTaskPosition.index <
+                column.cards.filter((columnCard) => columnCard.id !== draggedTaskId).length
+                ? column.cards.filter((columnCard) => columnCard.id !== draggedTaskId).findIndex((columnCard) => columnCard.id === card.id) === dragOverTaskPosition.index
+                  ? 'before'
+                  : null
+                : null
+            }
             editingDisabled={addingDisabled}
             key={card.id}
             onDelete={() => onDeleteCard(card.id)}
-            onDragEnd={onDragEnd}
-            onDragStart={() => onDragStart(card.id, column.id)}
+            onPointerDown={(event) => onTaskPointerDown(event, card.id, column.id)}
             onEdit={() => onEditCard(card)}
           />
         ))}
+
+        {column.cards.length > 0 &&
+        dragOverTaskPosition?.columnId === column.id &&
+        dragOverTaskPosition.index === column.cards.filter((columnCard) => columnCard.id !== draggedTaskId).length ? (
+          <div className="relative h-0 shrink-0">
+            <div className="absolute inset-x-0 top-0 h-0.5 rounded-full bg-primary" />
+          </div>
+        ) : null}
 
         {isAdding ? (
           <div className="rounded-lg border border-primary/30 bg-card p-3 shadow-card">
@@ -815,27 +1008,28 @@ function BoardColumn({
               placeholder="Task title..."
               value={title}
               onChange={(event) => setTitle(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  submitNewCard()
+                }
+              }}
               className="mb-2 h-8 border-0 bg-transparent p-0 text-sm font-medium shadow-none placeholder:text-muted-foreground/60 focus-visible:ring-0"
             />
             <textarea
               className="min-h-[72px] w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/40"
               onChange={(event) => setDescription(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                  event.preventDefault()
+                  submitNewCard()
+                }
+              }}
               placeholder="Optional details"
               value={description}
             />
             <div className="mt-2 flex gap-2">
-              <Button
-                size="sm"
-                onClick={() => {
-                  if (!title.trim()) {
-                    return
-                  }
-                  onAddCard({ title, description })
-                  setTitle('')
-                  setDescription('')
-                  setIsAdding(false)
-                }}
-              >
+              <Button size="sm" onClick={submitNewCard}>
                 Add
               </Button>
               <Button
@@ -867,6 +1061,86 @@ function BoardColumn({
           <Plus className="h-3.5 w-3.5" />
           Add card
         </button>
+      ) : null}
+    </div>
+  )
+}
+
+function ColumnDragGhost({
+  column,
+  pointer
+}: {
+  column: ColumnRecord
+  pointer: { x: number; y: number }
+}): JSX.Element {
+  return (
+    <div
+      className="pointer-events-none fixed z-[100] w-72 -translate-x-6 -translate-y-5 rounded-xl border border-border bg-column/95 p-3 shadow-[0_18px_40px_rgba(55,37,15,0.14)] backdrop-blur-[1px]"
+      style={{ left: pointer.x, top: pointer.y }}
+    >
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-sm font-semibold text-foreground">{column.title}</span>
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-xs font-medium text-muted-foreground">
+            {column.cards.length}
+          </span>
+        </div>
+        <div className="flex items-center gap-1 text-muted-foreground/70">
+          <div className="flex h-7 w-7 items-center justify-center">
+            <GripVertical className="h-4 w-4" />
+          </div>
+          <div className="flex h-7 w-7 items-center justify-center">
+            <MoreHorizontal className="h-3.5 w-3.5" />
+          </div>
+          <div className="flex h-7 w-7 items-center justify-center">
+            <Plus className="h-4 w-4" />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex max-h-52 flex-col gap-2 overflow-hidden">
+        {column.cards.length === 0 ? (
+          <div className="flex min-h-[112px] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border/60 py-8 text-center">
+            <p className="text-xs text-muted-foreground">No tasks yet</p>
+            <p className="mt-1 text-xs font-medium text-primary">Add your first task</p>
+          </div>
+        ) : (
+          column.cards.slice(0, 3).map((card) => (
+            <div key={card.id} className="rounded-lg border border-border/80 bg-card px-4 py-3 shadow-card">
+              <p className="truncate text-sm font-medium text-card-foreground">{card.title}</p>
+            </div>
+          ))
+        )}
+      </div>
+
+      {column.cards.length > 0 ? (
+        <div className="mt-2 rounded-lg border-2 border-dashed border-border/60 px-4 py-3 text-center text-sm text-muted-foreground">
+          + Add card
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function TaskDragGhost({
+  card,
+  offset,
+  pointer
+}: {
+  card: CardRecord
+  offset: { x: number; y: number }
+  pointer: { x: number; y: number }
+}): JSX.Element {
+  return (
+    <div
+      className="pointer-events-none fixed z-[110] w-[320px] rounded-lg border border-border bg-card/95 p-3 shadow-[0_18px_40px_rgba(55,37,15,0.14)] backdrop-blur-[1px]"
+      style={{ left: pointer.x - offset.x, top: pointer.y - offset.y }}
+    >
+      <p className="text-sm font-medium leading-snug text-card-foreground">{card.title}</p>
+      {card.description ? (
+        <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">
+          {card.description}
+        </p>
       ) : null}
     </div>
   )
@@ -946,31 +1220,36 @@ function AddColumnPanel({
 function TaskCard({
   card,
   draggedTaskId,
+  dragOverTaskPosition,
   editingDisabled,
   onDelete,
-  onDragEnd,
-  onDragStart,
+  onPointerDown,
   onEdit
 }: {
   card: CardRecord
   draggedTaskId: string | null
+  dragOverTaskPosition: 'before' | null
   editingDisabled: boolean
   onDelete: () => void
-  onDragEnd: () => void
-  onDragStart: () => void
+  onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void
   onEdit: () => void
 }): JSX.Element {
   return (
     <div
-      draggable={!editingDisabled}
-      onDragEnd={onDragEnd}
-      onDragStart={onDragStart}
+      data-task-card="true"
+      data-task-card-id={card.id}
+      onPointerDown={editingDisabled ? undefined : onPointerDown}
       className={cn(
         'group relative cursor-grab rounded-lg border border-border bg-card p-3 transition-all duration-150 active:cursor-grabbing',
         'hover:border-border/80 hover:shadow-card-hover shadow-card',
         draggedTaskId === card.id && 'opacity-50 shadow-card-drag'
       )}
     >
+      {dragOverTaskPosition ? (
+        <div
+          className="absolute left-0 right-0 -top-1 z-10 h-0.5 rounded-full bg-primary"
+        />
+      ) : null}
       <div className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-100">
         <GripVertical className="h-4 w-4 text-muted-foreground/50" />
       </div>

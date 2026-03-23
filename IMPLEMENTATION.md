@@ -32,6 +32,7 @@ This document tracks the real implementation state of the repository and the hig
 - Multiple boards now exist as first-class persisted entities, with active board selection restored across app restarts
 - Columns are now board-specific and customizable, including create, rename, and delete flows in the renderer
 - Columns now support inline rename on click, drag-and-drop reordering inside the active board, and moving an entire column to another board through board-tab drop targets
+- Card dragging now uses pointer-driven interaction instead of native HTML drag, with a custom ghost preview and more tolerant reordering inside and across columns in the active board
 - The renderer footer now shows the runtime app version reported by Electron so packaged builds can display the same version number used by automated releases
 - GitHub release/version automation configured for `main`
 - Windows release packaging simplified to NSIS installer only
