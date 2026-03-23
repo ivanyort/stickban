@@ -150,6 +150,7 @@ This repository may contain code, documentation, and project structure created o
 The repository now contains a runnable local-first Electron/React/TypeScript scaffold for the first milestone.
 The current repository state is tracked in [`IMPLEMENTATION.md`](./IMPLEMENTATION.md).
 The initial scaffold is expected to work without paid services, subscriptions, cloud infrastructure, or Google integration.
+The app footer displays the runtime application version exposed by Electron, which is intended to match the version injected into packaged releases by the GitHub Actions release workflow.
 
 ## License
 

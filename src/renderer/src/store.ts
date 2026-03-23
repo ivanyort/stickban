@@ -17,6 +17,7 @@ interface BoardState {
   alwaysOnTop: boolean
   isMaximized: boolean
   platform: string
+  appVersion: string
   loading: boolean
   saving: boolean
   error: string | null
@@ -56,6 +57,7 @@ export const useBoardStore = create<BoardState>((set) => ({
   alwaysOnTop: false,
   isMaximized: false,
   platform: 'unknown',
+  appVersion: '0.0.0',
   loading: true,
   saving: false,
   error: null,
@@ -74,6 +76,7 @@ export const useBoardStore = create<BoardState>((set) => ({
         alwaysOnTop: windowState.alwaysOnTop,
         isMaximized: windowState.isMaximized,
         platform: windowState.platform,
+        appVersion: windowState.appVersion,
         loading: false
       })
     } catch (error) {
@@ -198,7 +201,8 @@ export const useBoardStore = create<BoardState>((set) => ({
     set({
       alwaysOnTop: windowState.alwaysOnTop,
       isMaximized: windowState.isMaximized,
-      platform: windowState.platform
+      platform: windowState.platform,
+      appVersion: windowState.appVersion
     })
   },
   minimizeWindow: async () => {
@@ -209,7 +213,8 @@ export const useBoardStore = create<BoardState>((set) => ({
     set({
       alwaysOnTop: windowState.alwaysOnTop,
       isMaximized: windowState.isMaximized,
-      platform: windowState.platform
+      platform: windowState.platform,
+      appVersion: windowState.appVersion
     })
   },
   closeWindow: async () => {

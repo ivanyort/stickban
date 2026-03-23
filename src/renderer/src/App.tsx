@@ -34,6 +34,7 @@ function App(): JSX.Element {
     alwaysOnTop,
     isMaximized,
     platform,
+    appVersion,
     loading,
     saving,
     error,
@@ -465,6 +466,7 @@ function App(): JSX.Element {
           <span>
             {totalCards} tasks across {orderedColumns.length} columns
           </span>
+          <span>Version {appVersion}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className={cn('h-1.5 w-1.5 rounded-full', saving ? 'bg-amber-500' : 'bg-emerald-500')} />

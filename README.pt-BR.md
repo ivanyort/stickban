@@ -150,6 +150,7 @@ Este repositorio pode conter codigo, documentacao e estrutura de projeto criados
 O repositorio agora contem um scaffold executavel local-first em Electron/React/TypeScript para o primeiro milestone.
 O estado atual do repositorio esta documentado em [`IMPLEMENTATION.md`](./IMPLEMENTATION.md).
 Espera-se que o scaffold inicial funcione sem servicos pagos, assinaturas, infraestrutura cloud ou integracao com Google.
+O rodape do app exibe a versao de runtime exposta pelo Electron, pensada para coincidir com a versao injetada nas releases empacotadas pelo workflow de GitHub Actions.
 
 ## Licenca
 

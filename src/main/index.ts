@@ -90,14 +90,16 @@ function registerIpc(): void {
   ipcMain.handle('window:getState', () => ({
     alwaysOnTop: mainWindow?.isAlwaysOnTop() ?? false,
     isMaximized: mainWindow?.isMaximized() ?? false,
-    platform: process.platform
+    platform: process.platform,
+    appVersion: app.getVersion()
   }))
   ipcMain.handle('window:setAlwaysOnTop', (_event, value: boolean) => {
     mainWindow?.setAlwaysOnTop(value)
     return {
       alwaysOnTop: mainWindow?.isAlwaysOnTop() ?? false,
       isMaximized: mainWindow?.isMaximized() ?? false,
-      platform: process.platform
+      platform: process.platform,
+      appVersion: app.getVersion()
     }
   })
   ipcMain.handle('window:minimize', () => {
@@ -105,7 +107,7 @@ function registerIpc(): void {
   })
   ipcMain.handle('window:toggleMaximize', () => {
     if (!mainWindow) {
-      return { alwaysOnTop: false, isMaximized: false, platform: process.platform }
+      return { alwaysOnTop: false, isMaximized: false, platform: process.platform, appVersion: app.getVersion() }
     }
 
     if (mainWindow.isMaximized()) {
@@ -117,7 +119,8 @@ function registerIpc(): void {
     return {
       alwaysOnTop: mainWindow.isAlwaysOnTop(),
       isMaximized: mainWindow.isMaximized(),
-      platform: process.platform
+      platform: process.platform,
+      appVersion: app.getVersion()
     }
   })
   ipcMain.handle('window:close', () => {

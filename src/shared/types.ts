@@ -41,6 +41,7 @@ export interface WindowState {
   alwaysOnTop: boolean
   isMaximized: boolean
   platform: NodeJS.Platform
+  appVersion: string
 }
 
 export interface CardDraft {
