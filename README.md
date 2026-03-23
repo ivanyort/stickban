@@ -124,7 +124,7 @@ The structure below is planned, not implemented yet.
 For the detailed roadmap, see [`ROADMAP.md`](./ROADMAP.md).
 
 - MVP: local workspace, multiple boards, customizable columns, column drag and drop, SQLite persistence, always-on-top
-- Phase 2: Google Drive sync, system tray, themes
+- Phase 2: Google Drive sync, automatic update checks, multi-language interface, system tray, themes
 - Future: custom fields, notifications, advanced conflict resolution, mobile companion
 
 ## Repository Documents

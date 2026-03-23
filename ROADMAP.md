@@ -37,6 +37,8 @@ Status: `planned`
 Goals and milestones:
 
 - Google Drive synchronization
+- Automatic update checks and in-app version update flow
+- Multi-language interface support
 - System tray integration
 - Theme support
 
