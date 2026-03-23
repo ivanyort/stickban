@@ -294,14 +294,16 @@ function App(): JSX.Element {
       {platform === 'win32' ? <div className="pointer-events-none fixed inset-x-0 top-14 z-40 h-px bg-border" /> : null}
       <header
         className={cn(
-          'flex h-14 shrink-0 items-center justify-between gap-4 bg-card px-4',
+          'relative flex h-14 shrink-0 items-center justify-between gap-4 bg-card px-4',
           platform !== 'win32' && 'border-b border-border',
           platform === 'win32' && 'pr-[140px]'
         )}
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
       >
-        <div className="flex min-w-0 flex-1 items-center gap-4">
-          <div className="flex shrink-0 items-center gap-2">
+        <div className="relative z-10 flex min-w-0 flex-1 items-center gap-4">
+          <div
+            className="flex shrink-0 items-center gap-2 pr-2"
+          >
             <div className="flex h-9 w-9 items-center justify-center">
               <StickbanMark />
             </div>
@@ -310,10 +312,7 @@ function App(): JSX.Element {
 
           <div className="h-5 w-px shrink-0 bg-border" />
 
-          <div
-            className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-1 scrollbar-thin"
-            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
-          >
+          <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
             {boards.map((board) => (
               <BoardTab
                 board={board}
@@ -344,13 +343,17 @@ function App(): JSX.Element {
               className="h-8 w-8 shrink-0 rounded-full border border-dashed border-border text-muted-foreground hover:border-border hover:text-foreground"
               onClick={() => void createBoard({ title: `Board ${boards.length + 1}` })}
               title="Add board"
+              style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
             >
               <Plus className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-3" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+        <div
+          className="relative z-10 flex shrink-0 items-center gap-3"
+          style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+        >
           <div className="flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-muted-foreground">
             <CloudOff className="h-3 w-3" />
             <span>Local</span>
@@ -532,6 +535,7 @@ function BoardTab({
           ? 'border-border bg-card text-foreground shadow-card'
           : 'border-transparent bg-secondary/70 text-muted-foreground hover:border-border/60 hover:text-foreground'
       )}
+      style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >
       {isEditing ? (
         <Input

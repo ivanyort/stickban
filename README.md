@@ -75,6 +75,22 @@ To launch the built app as `root`:
 npm run start:root
 ```
 
+## Local Data Path
+
+Stickban persists its local SQLite database at:
+
+```text
+<userData>/data/stickban.db
+```
+
+Typical locations:
+
+- Windows packaged app: `%APPDATA%/Stickban/data/stickban.db`
+- Linux packaged app: `~/.config/Stickban/data/stickban.db`
+- Linux development runs: `~/.config/Electron/data/stickban.db`
+
+The Linux development path may use `Electron` instead of `Stickban` because Electron dev runs can inherit the default app name before packaging.
+
 ## Core Principles
 
 - Local data is the source of truth

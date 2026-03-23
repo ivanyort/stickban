@@ -75,6 +75,22 @@ Para abrir o app buildado como `root`:
 npm run start:root
 ```
 
+## Localizacao dos Dados Locais
+
+O Stickban persiste seu banco SQLite local em:
+
+```text
+<userData>/data/stickban.db
+```
+
+Locais tipicos:
+
+- App empacotado no Windows: `%APPDATA%/Stickban/data/stickban.db`
+- App empacotado no Linux: `~/.config/Stickban/data/stickban.db`
+- Execucao de desenvolvimento no Linux: `~/.config/Electron/data/stickban.db`
+
+No Linux em desenvolvimento, a pasta pode aparecer como `Electron` em vez de `Stickban` porque execucoes dev do Electron podem herdar o nome padrao do app antes do empacotamento.
+
 ## Principios Centrais
 
 - Dados locais sao a fonte de verdade
