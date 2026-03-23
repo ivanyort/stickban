@@ -33,6 +33,10 @@ export interface CardDraft {
   description: string
 }
 
+export interface BoardDraft {
+  title: string
+}
+
 export interface CardMovePayload {
   cardId: string
   toColumnId: string
@@ -41,6 +45,7 @@ export interface CardMovePayload {
 
 export interface StickbanApi {
   getBoard: () => Promise<BoardRecord>
+  updateBoard: (draft: BoardDraft) => Promise<BoardRecord>
   createCard: (columnId: string, draft: CardDraft) => Promise<BoardRecord>
   updateCard: (cardId: string, draft: CardDraft) => Promise<BoardRecord>
   deleteCard: (cardId: string) => Promise<BoardRecord>

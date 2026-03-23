@@ -28,6 +28,7 @@ This document tracks the real implementation state of the repository and the hig
 - Renderer now uses local Geist font assets and native column-based drag-and-drop to better match `references/frontend_v001`
 - Electron window now uses custom top-bar controls for close, minimize, and maximize/restore
 - Desktop window chrome now uses platform-specific native behavior: Windows uses `titleBarStyle: hidden` with `titleBarOverlay` for native window controls without the traditional title bar, while Linux keeps a frameless window with custom controls in the renderer
+- Board title edits in the header now persist through SQLite instead of living only in renderer state
 - GitHub release/version automation configured for `main`
 - Windows release packaging simplified to NSIS installer only
 - Public GitHub Releases currently publish Windows artifacts only

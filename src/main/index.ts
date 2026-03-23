@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, Menu } from 'electron'
 import { join } from 'node:path'
-import { createCard, deleteCard, getBoard, initializeDatabase, moveCard, updateCard } from './database'
-import type { CardDraft, CardMovePayload } from '../shared/types'
+import { createCard, deleteCard, getBoard, initializeDatabase, moveCard, updateBoard, updateCard } from './database'
+import type { BoardDraft, CardDraft, CardMovePayload } from '../shared/types'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -54,6 +54,7 @@ function createMainWindow(): BrowserWindow {
 
 function registerIpc(): void {
   ipcMain.handle('board:get', () => getBoard())
+  ipcMain.handle('board:update', (_event, draft: BoardDraft) => updateBoard(draft))
   ipcMain.handle('card:create', (_event, columnId: string, draft: CardDraft) => createCard(columnId, draft))
   ipcMain.handle('card:update', (_event, cardId: string, draft: CardDraft) => updateCard(cardId, draft))
   ipcMain.handle('card:delete', (_event, cardId: string) => deleteCard(cardId))

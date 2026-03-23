@@ -1,7 +1,7 @@
 import { mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import Database from 'better-sqlite3'
-import type { BoardRecord, CardDraft } from '../shared/types'
+import type { BoardDraft, BoardRecord, CardDraft } from '../shared/types'
 
 const BOARD_ID = 'board-default'
 const DEFAULT_COLUMNS = [
@@ -175,6 +175,19 @@ export function createCard(columnId: string, draft: CardDraft): BoardRecord {
     now(),
     now()
   )
+
+  return getBoard()
+}
+
+export function updateBoard(draft: BoardDraft): BoardRecord {
+  const database = getDb()
+  const trimmedTitle = draft.title.trim()
+
+  if (!trimmedTitle) {
+    throw new Error('Board title is required')
+  }
+
+  database.prepare('UPDATE boards SET title = ? WHERE id = ?').run(trimmedTitle, BOARD_ID)
 
   return getBoard()
 }

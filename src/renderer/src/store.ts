@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { BoardRecord, CardDraft, CardRecord } from '@shared/types'
+import type { BoardRecord, BoardDraft, CardDraft, CardRecord } from '@shared/types'
 
 interface BoardState {
   board: BoardRecord | null
@@ -11,6 +11,7 @@ interface BoardState {
   error: string | null
   editingCard: CardRecord | null
   initialize: () => Promise<void>
+  updateBoard: (draft: BoardDraft) => Promise<void>
   createCard: (columnId: string, draft: CardDraft) => Promise<void>
   updateCard: (cardId: string, draft: CardDraft) => Promise<void>
   deleteCard: (cardId: string) => Promise<void>
@@ -63,6 +64,18 @@ export const useBoardStore = create<BoardState>((set) => ({
       set({
         saving: false,
         error: error instanceof Error ? error.message : 'Failed to create card'
+      })
+    }
+  },
+  updateBoard: async (draft) => {
+    set({ saving: true, error: null })
+    try {
+      const board = await window.stickban.updateBoard(draft)
+      set({ board, saving: false })
+    } catch (error) {
+      set({
+        saving: false,
+        error: error instanceof Error ? error.message : 'Failed to update board'
       })
     }
   },

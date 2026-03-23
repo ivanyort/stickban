@@ -1,8 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { CardDraft, CardMovePayload, StickbanApi } from '../shared/types'
+import type { BoardDraft, CardDraft, CardMovePayload, StickbanApi } from '../shared/types'
 
 const api: StickbanApi = {
   getBoard: () => ipcRenderer.invoke('board:get'),
+  updateBoard: (draft: BoardDraft) => ipcRenderer.invoke('board:update', draft),
   createCard: (columnId: string, draft: CardDraft) => ipcRenderer.invoke('card:create', columnId, draft),
   updateCard: (cardId: string, draft: CardDraft) => ipcRenderer.invoke('card:update', cardId, draft),
   deleteCard: (cardId: string) => ipcRenderer.invoke('card:delete', cardId),

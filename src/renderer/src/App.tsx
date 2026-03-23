@@ -35,6 +35,7 @@ function App(): JSX.Element {
     error,
     editingCard,
     initialize,
+    updateBoard,
     createCard,
     updateCard,
     deleteCard,
@@ -60,6 +61,27 @@ function App(): JSX.Element {
       setBoardTitle(board.title)
     }
   }, [board])
+
+  const persistBoardTitle = (): void => {
+    if (!board) {
+      return
+    }
+
+    const nextTitle = boardTitle.trim()
+
+    if (!nextTitle) {
+      setBoardTitle(board.title)
+      setEditingBoardTitle(false)
+      return
+    }
+
+    if (nextTitle !== board.title) {
+      void updateBoard({ title: nextTitle })
+    }
+
+    setBoardTitle(nextTitle)
+    setEditingBoardTitle(false)
+  }
 
   if (loading) {
     return (
@@ -123,11 +145,9 @@ function App(): JSX.Element {
 
   return (
     <div className="flex h-screen flex-col bg-background">
+      {platform === 'win32' ? <div className="pointer-events-none fixed inset-x-0 top-14 z-40 h-px bg-border" /> : null}
       <header
-        className={cn(
-          'flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4',
-          platform === 'win32' && 'pr-[140px]'
-        )}
+        className={cn('flex h-14 shrink-0 items-center justify-between bg-card px-4', platform !== 'win32' && 'border-b border-border', platform === 'win32' && 'pr-[140px]')}
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
       >
         <div className="flex items-center gap-4">
@@ -156,9 +176,14 @@ function App(): JSX.Element {
               ref={boardTitleRef}
               value={boardTitle}
               onChange={(event) => setBoardTitle(event.target.value)}
-              onBlur={() => setEditingBoardTitle(false)}
+              onBlur={persistBoardTitle}
               onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === 'Escape') {
+                if (event.key === 'Enter') {
+                  persistBoardTitle()
+                }
+
+                if (event.key === 'Escape') {
+                  setBoardTitle(board.title)
                   setEditingBoardTitle(false)
                 }
               }}
