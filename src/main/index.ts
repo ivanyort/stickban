@@ -1,6 +1,6 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu } from 'electron'
 import { join } from 'node:path'
-import { createCard, getBoard, initializeDatabase, moveCard, updateCard } from './database'
+import { createCard, deleteCard, getBoard, initializeDatabase, moveCard, updateCard } from './database'
 import type { CardDraft, CardMovePayload } from '../shared/types'
 
 let mainWindow: BrowserWindow | null = null
@@ -14,6 +14,19 @@ function createMainWindow(): BrowserWindow {
     show: false,
     title: 'Stickban',
     backgroundColor: '#eef2ff',
+    ...(process.platform === 'win32'
+      ? {
+          titleBarStyle: 'hidden' as const,
+          titleBarOverlay: {
+            color: '#fdfbf8',
+            symbolColor: '#7f6758',
+            height: 56
+          }
+        }
+      : {
+          frame: false
+        }),
+    autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -21,7 +34,12 @@ function createMainWindow(): BrowserWindow {
     }
   })
 
+  if (process.platform === 'win32' || process.platform === 'linux') {
+    window.removeMenu()
+  }
+
   window.once('ready-to-show', () => {
+    window.setMenuBarVisibility(false)
     window.show()
   })
 
@@ -38,21 +56,50 @@ function registerIpc(): void {
   ipcMain.handle('board:get', () => getBoard())
   ipcMain.handle('card:create', (_event, columnId: string, draft: CardDraft) => createCard(columnId, draft))
   ipcMain.handle('card:update', (_event, cardId: string, draft: CardDraft) => updateCard(cardId, draft))
+  ipcMain.handle('card:delete', (_event, cardId: string) => deleteCard(cardId))
   ipcMain.handle('card:move', (_event, payload: CardMovePayload) =>
     moveCard(payload.cardId, payload.toColumnId, payload.toIndex)
   )
   ipcMain.handle('window:getState', () => ({
-    alwaysOnTop: mainWindow?.isAlwaysOnTop() ?? false
+    alwaysOnTop: mainWindow?.isAlwaysOnTop() ?? false,
+    isMaximized: mainWindow?.isMaximized() ?? false,
+    platform: process.platform
   }))
   ipcMain.handle('window:setAlwaysOnTop', (_event, value: boolean) => {
     mainWindow?.setAlwaysOnTop(value)
     return {
-      alwaysOnTop: mainWindow?.isAlwaysOnTop() ?? false
+      alwaysOnTop: mainWindow?.isAlwaysOnTop() ?? false,
+      isMaximized: mainWindow?.isMaximized() ?? false,
+      platform: process.platform
     }
+  })
+  ipcMain.handle('window:minimize', () => {
+    mainWindow?.minimize()
+  })
+  ipcMain.handle('window:toggleMaximize', () => {
+    if (!mainWindow) {
+      return { alwaysOnTop: false, isMaximized: false, platform: process.platform }
+    }
+
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize()
+    } else {
+      mainWindow.maximize()
+    }
+
+    return {
+      alwaysOnTop: mainWindow.isAlwaysOnTop(),
+      isMaximized: mainWindow.isMaximized(),
+      platform: process.platform
+    }
+  })
+  ipcMain.handle('window:close', () => {
+    mainWindow?.close()
   })
 }
 
 app.whenReady().then(() => {
+  Menu.setApplicationMenu(null)
   initializeDatabase(app.getPath('userData'))
   registerIpc()
   mainWindow = createMainWindow()

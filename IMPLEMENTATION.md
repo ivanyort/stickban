@@ -24,6 +24,10 @@ This document tracks the real implementation state of the repository and the hig
 - Initial Electron/React/TypeScript scaffold delivered
 - Local SQLite persistence layer delivered
 - Single-board drag-and-drop UI delivered
+- Renderer UI aligned to the `references/frontend_v001` visual direction, including card action menu support
+- Renderer now uses local Geist font assets and native column-based drag-and-drop to better match `references/frontend_v001`
+- Electron window now uses custom top-bar controls for close, minimize, and maximize/restore
+- Desktop window chrome now uses platform-specific native behavior: Windows uses `titleBarStyle: hidden` with `titleBarOverlay` for native window controls without the traditional title bar, while Linux keeps a frameless window with custom controls in the renderer
 - GitHub release/version automation configured for `main`
 - Windows release packaging simplified to NSIS installer only
 - Public GitHub Releases currently publish Windows artifacts only

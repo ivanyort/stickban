@@ -4,6 +4,8 @@ import type { BoardRecord, CardDraft, CardRecord } from '@shared/types'
 interface BoardState {
   board: BoardRecord | null
   alwaysOnTop: boolean
+  isMaximized: boolean
+  platform: string
   loading: boolean
   saving: boolean
   error: string | null
@@ -11,14 +13,20 @@ interface BoardState {
   initialize: () => Promise<void>
   createCard: (columnId: string, draft: CardDraft) => Promise<void>
   updateCard: (cardId: string, draft: CardDraft) => Promise<void>
+  deleteCard: (cardId: string) => Promise<void>
   moveCard: (cardId: string, toColumnId: string, toIndex: number) => Promise<void>
   setEditingCard: (card: CardRecord | null) => void
   toggleAlwaysOnTop: () => Promise<void>
+  minimizeWindow: () => Promise<void>
+  toggleMaximizeWindow: () => Promise<void>
+  closeWindow: () => Promise<void>
 }
 
 export const useBoardStore = create<BoardState>((set) => ({
   board: null,
   alwaysOnTop: false,
+  isMaximized: false,
+  platform: 'unknown',
   loading: true,
   saving: false,
   error: null,
@@ -35,6 +43,8 @@ export const useBoardStore = create<BoardState>((set) => ({
       set({
         board,
         alwaysOnTop: windowState.alwaysOnTop,
+        isMaximized: windowState.isMaximized,
+        platform: windowState.platform,
         loading: false
       })
     } catch (error) {
@@ -68,6 +78,18 @@ export const useBoardStore = create<BoardState>((set) => ({
       })
     }
   },
+  deleteCard: async (cardId) => {
+    set({ saving: true, error: null })
+    try {
+      const board = await window.stickban.deleteCard(cardId)
+      set({ board, saving: false })
+    } catch (error) {
+      set({
+        saving: false,
+        error: error instanceof Error ? error.message : 'Failed to delete card'
+      })
+    }
+  },
   moveCard: async (cardId, toColumnId, toIndex) => {
     set({ saving: true, error: null })
     try {
@@ -84,6 +106,24 @@ export const useBoardStore = create<BoardState>((set) => ({
   toggleAlwaysOnTop: async () => {
     const current = useBoardStore.getState().alwaysOnTop
     const windowState = await window.stickban.setAlwaysOnTop(!current)
-    set({ alwaysOnTop: windowState.alwaysOnTop })
+    set({
+      alwaysOnTop: windowState.alwaysOnTop,
+      isMaximized: windowState.isMaximized,
+      platform: windowState.platform
+    })
+  },
+  minimizeWindow: async () => {
+    await window.stickban.minimizeWindow()
+  },
+  toggleMaximizeWindow: async () => {
+    const windowState = await window.stickban.toggleMaximizeWindow()
+    set({
+      alwaysOnTop: windowState.alwaysOnTop,
+      isMaximized: windowState.isMaximized,
+      platform: windowState.platform
+    })
+  },
+  closeWindow: async () => {
+    await window.stickban.closeWindow()
   }
 }))

@@ -194,6 +194,35 @@ export function updateCard(cardId: string, draft: CardDraft): BoardRecord {
   return getBoard()
 }
 
+export function deleteCard(cardId: string): BoardRecord {
+  const database = getDb()
+  const card = database
+    .prepare('SELECT id, column_id FROM cards WHERE id = ?')
+    .get(cardId) as { id: string; column_id: string } | undefined
+
+  if (!card) {
+    throw new Error('Card not found')
+  }
+
+  const remove = database.transaction(() => {
+    database.prepare('DELETE FROM cards WHERE id = ?').run(cardId)
+
+    const remainingIds = (
+      database
+        .prepare('SELECT id FROM cards WHERE column_id = ? ORDER BY position ASC')
+        .all(card.column_id) as Array<{ id: string }>
+    ).map((row) => row.id)
+
+    const updatePosition = database.prepare('UPDATE cards SET position = ?, updated_at = ? WHERE id = ?')
+    remainingIds.forEach((id, index) => {
+      updatePosition.run(index, now(), id)
+    })
+  })
+
+  remove()
+  return getBoard()
+}
+
 export function moveCard(cardId: string, toColumnId: string, toIndex: number): BoardRecord {
   const database = getDb()
 

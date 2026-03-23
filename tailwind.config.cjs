@@ -3,15 +3,52 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        board: '#eef2ff',
-        ink: '#0f172a',
-        accent: '#2563eb',
-        accentSoft: '#dbeafe',
-        surface: '#ffffff',
-        line: '#cbd5e1'
+        border: 'var(--border)',
+        input: 'var(--input)',
+        ring: 'var(--ring)',
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
+        primary: {
+          DEFAULT: 'var(--primary)',
+          foreground: 'var(--primary-foreground)'
+        },
+        secondary: {
+          DEFAULT: 'var(--secondary)',
+          foreground: 'var(--secondary-foreground)'
+        },
+        muted: {
+          DEFAULT: 'var(--muted)',
+          foreground: 'var(--muted-foreground)'
+        },
+        accent: {
+          DEFAULT: 'var(--accent)',
+          foreground: 'var(--accent-foreground)'
+        },
+        popover: {
+          DEFAULT: 'var(--popover)',
+          foreground: 'var(--popover-foreground)'
+        },
+        card: {
+          DEFAULT: 'var(--card)',
+          foreground: 'var(--card-foreground)'
+        },
+        column: {
+          DEFAULT: 'var(--column-bg)'
+        },
+        destructive: {
+          DEFAULT: 'var(--destructive)',
+          foreground: 'var(--destructive-foreground)'
+        }
       },
       boxShadow: {
-        card: '0 14px 30px -18px rgba(15, 23, 42, 0.35)'
+        card: 'var(--card-shadow)',
+        'card-hover': 'var(--card-shadow-hover)',
+        'card-drag': 'var(--card-shadow-drag)'
+      },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)'
       }
     }
   },

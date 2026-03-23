@@ -1,28 +1,86 @@
+@import '@fontsource-variable/geist';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  color: #0f172a;
-  background: #eef2ff;
+  --background: oklch(0.97 0.005 75);
+  --foreground: oklch(0.25 0.02 50);
+  --card: oklch(0.995 0.003 75);
+  --card-foreground: oklch(0.25 0.02 50);
+  --popover: oklch(0.995 0.003 75);
+  --popover-foreground: oklch(0.25 0.02 50);
+  --primary: oklch(0.45 0.12 45);
+  --primary-foreground: oklch(0.98 0.005 75);
+  --secondary: oklch(0.94 0.01 75);
+  --secondary-foreground: oklch(0.3 0.02 50);
+  --muted: oklch(0.92 0.008 75);
+  --muted-foreground: oklch(0.5 0.02 50);
+  --accent: oklch(0.55 0.1 40);
+  --accent-foreground: oklch(0.98 0.005 75);
+  --destructive: oklch(0.55 0.2 25);
+  --destructive-foreground: oklch(0.98 0.005 75);
+  --border: oklch(0.88 0.015 75);
+  --input: oklch(0.92 0.01 75);
+  --ring: oklch(0.45 0.12 45);
+  --radius: 0.5rem;
+  --column-bg: oklch(0.94 0.008 75);
+  --card-shadow: 0 1px 3px oklch(0.3 0.02 50 / 0.08), 0 4px 12px oklch(0.3 0.02 50 / 0.04);
+  --card-shadow-hover: 0 4px 12px oklch(0.3 0.02 50 / 0.12), 0 8px 24px oklch(0.3 0.02 50 / 0.06);
+  --card-shadow-drag: 0 8px 24px oklch(0.3 0.02 50 / 0.18), 0 16px 48px oklch(0.3 0.02 50 / 0.08);
+  color: var(--foreground);
+  background: var(--background);
   font-family:
+    'Geist Variable',
+    'Geist',
     'Segoe UI',
-    'Inter',
     sans-serif;
-}
-
-body {
-  margin: 0;
-  min-width: 980px;
-  min-height: 100vh;
 }
 
 * {
   box-sizing: border-box;
 }
 
+body {
+  @apply bg-background text-foreground;
+  margin: 0;
+  min-width: 980px;
+  min-height: 100vh;
+  font-family:
+    'Geist Variable',
+    'Geist',
+    'Segoe UI',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 button,
 input,
 textarea {
   font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+html,
+body {
+  overflow: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--border) 85%, black 4%);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
 }

@@ -24,6 +24,8 @@ export interface BoardRecord {
 
 export interface WindowState {
   alwaysOnTop: boolean
+  isMaximized: boolean
+  platform: NodeJS.Platform
 }
 
 export interface CardDraft {
@@ -41,7 +43,11 @@ export interface StickbanApi {
   getBoard: () => Promise<BoardRecord>
   createCard: (columnId: string, draft: CardDraft) => Promise<BoardRecord>
   updateCard: (cardId: string, draft: CardDraft) => Promise<BoardRecord>
+  deleteCard: (cardId: string) => Promise<BoardRecord>
   moveCard: (payload: CardMovePayload) => Promise<BoardRecord>
   getWindowState: () => Promise<WindowState>
   setAlwaysOnTop: (value: boolean) => Promise<WindowState>
+  minimizeWindow: () => Promise<void>
+  toggleMaximizeWindow: () => Promise<WindowState>
+  closeWindow: () => Promise<void>
 }
