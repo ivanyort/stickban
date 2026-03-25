@@ -188,10 +188,9 @@ export class SyncManager {
   clearSyncFolder(): SyncStatus {
     this.stopWatching()
     this.pendingRemoteBootstrap = null
-    const currentConfig = this.readConfig()
     this.writeConfig({
       folderPath: null,
-      linkedSyncRootPath: currentConfig.linkedSyncRootPath ?? this.status.syncRootPath
+      linkedSyncRootPath: null
     })
     this.status = {
       ...this.status,
@@ -199,6 +198,10 @@ export class SyncManager {
       folderPath: null,
       syncRootPath: null,
       providerHint: null,
+      lastSyncedAtUtc: null,
+      lastImportedAtUtc: null,
+      lastExportedAtUtc: null,
+      lastCheckpointAtUtc: null,
       lastError: null,
       bootstrapConflict: null
     }
