@@ -294,6 +294,41 @@ export class SyncManager {
       const remoteState = this.scanRemoteState(info)
       const localState = getWorkspaceBootstrapState()
       const isCurrentRootLinked = persistedConfig.linkedSyncRootPath === info.syncRootPath
+      const requiresRemoteBootstrap =
+        !isCurrentRootLinked && remoteState.operationCount + remoteState.checkpointCount > 0 && localState.isPristineSeedWorkspace
+
+      if (requiresRemoteBootstrap) {
+        const importedCheckpoint = this.importNewestCheckpoint(info)
+        const importedCount = this.importRemoteOperations(info)
+        const postBootstrapState = getWorkspaceBootstrapState()
+        const bootstrapSucceeded =
+          importedCheckpoint || importedCount > 0 || (postBootstrapState.boardCount > 0 && !postBootstrapState.isPristineSeedWorkspace)
+
+        if (!bootstrapSucceeded) {
+          throw new Error(
+            'Remote workspace bootstrap failed before local export. Stickban refused to write local state into a populated sync folder.'
+          )
+        }
+
+        if (importedCount > 0 || importedCheckpoint) {
+          this.status = { ...this.status, lastImportedAtUtc: now() }
+        }
+
+        this.writeConfig({
+          folderPath: this.status.folderPath,
+          linkedSyncRootPath: info.syncRootPath
+        })
+        this.pendingRemoteBootstrap = null
+        this.status = {
+          ...this.status,
+          syncing: false,
+          lastSyncedAtUtc: now(),
+          lastError: null,
+          bootstrapConflict: null
+        }
+        this.refreshPendingLocalOperations()
+        return this.getStatus()
+      }
 
       if (remoteState.operationCount === 0 && remoteState.checkpointCount === 0) {
         if (!isCurrentRootLinked) {
@@ -544,35 +579,63 @@ export class SyncManager {
       .filter((entry): entry is SyncCheckpoint => Boolean(entry))
       .sort(compareCheckpoints)
 
-    const latest = checkpoints.at(-1)
-    if (!latest) {
-      return false
-    }
-
     const localClock = getLocalClock()
     const localApplied = getAppliedOperationsCount()
     const localWorkspace = getWorkspaceBootstrapState()
-    const remoteHasWorkspaceData =
-      latest.workspace.boards.length > 0 || latest.workspace.columns.length > 0 || latest.workspace.cards.length > 0
-    const localNeedsBootstrap = localWorkspace.boardCount === 0 || localWorkspace.isPristineSeedWorkspace
 
-    if (latest.maxClock < localClock) {
-      return false
-    }
-    if (latest.maxClock === localClock && latest.workspace.appliedOperationIds.length <= localApplied) {
-      if (!(localNeedsBootstrap && remoteHasWorkspaceData)) {
-        return false
+    for (const latest of [...checkpoints].reverse()) {
+      const remoteHasWorkspaceData =
+        latest.workspace.boards.length > 0 || latest.workspace.columns.length > 0 || latest.workspace.cards.length > 0
+      const localNeedsBootstrap = localWorkspace.boardCount === 0 || localWorkspace.isPristineSeedWorkspace
+
+      if (localNeedsBootstrap && remoteHasWorkspaceData) {
+        try {
+          importCheckpoint(latest)
+          this.pushNotice({
+            id: randomUUID(),
+            level: 'info',
+            message: `Imported checkpoint ${latest.checkpointId.slice(0, 8)} from ${latest.deviceId.slice(0, 8)}.`,
+            createdAtUtc: now()
+          })
+          return true
+        } catch (error) {
+          this.pushNotice({
+            id: randomUUID(),
+            level: 'warning',
+            message: error instanceof Error ? error.message : 'Skipped an invalid remote checkpoint.',
+            createdAtUtc: now()
+          })
+          continue
+        }
+      }
+
+      if (latest.maxClock < localClock) {
+        continue
+      }
+      if (latest.maxClock === localClock && latest.workspace.appliedOperationIds.length <= localApplied) {
+        continue
+      }
+
+      try {
+        importCheckpoint(latest)
+        this.pushNotice({
+          id: randomUUID(),
+          level: 'info',
+          message: `Imported checkpoint ${latest.checkpointId.slice(0, 8)} from ${latest.deviceId.slice(0, 8)}.`,
+          createdAtUtc: now()
+        })
+        return true
+      } catch (error) {
+        this.pushNotice({
+          id: randomUUID(),
+          level: 'warning',
+          message: error instanceof Error ? error.message : 'Skipped an invalid remote checkpoint.',
+          createdAtUtc: now()
+        })
       }
     }
 
-    importCheckpoint(latest)
-    this.pushNotice({
-      id: randomUUID(),
-      level: 'info',
-      message: `Imported checkpoint ${latest.checkpointId.slice(0, 8)} from ${latest.deviceId.slice(0, 8)}.`,
-      createdAtUtc: now()
-    })
-    return true
+    return false
   }
 
   private writeCheckpoint(info: SyncFolderConfig): void {

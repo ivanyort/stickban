@@ -195,6 +195,8 @@
 - Consequences / Consequencias:
   The product no longer depends on Google Drive APIs or OAuth. Sync correctness now depends on operation-log replay, tombstones, and checkpoint recovery instead of a single shared snapshot file. Public documentation must describe synced-folder cloud sync as current repository reality.
   O produto deixa de depender de APIs do Google Drive ou OAuth. A corretude do sync agora depende de replay do log de operacoes, tombstones e recuperacao por checkpoints, em vez de um unico arquivo de snapshot compartilhado. A documentacao publica deve descrever o sync por pasta sincronizada como realidade atual do repositorio.
+  Remote bootstrap into an already populated synced folder must import and validate remote state before any local export or checkpoint write is allowed, and invalid checkpoints or orphan remote operations must be rejected instead of becoming the new canonical state.
+  O bootstrap remoto em uma pasta sincronizada ja populada deve importar e validar o estado remoto antes de permitir qualquer export local ou escrita de checkpoint, e checkpoints invalidos ou operacoes remotas orfas devem ser rejeitados em vez de virarem o novo estado canonico.
 
 ## D-014: Windows Auto-update via GitHub Releases
 

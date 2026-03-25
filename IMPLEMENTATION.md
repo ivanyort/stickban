@@ -36,6 +36,7 @@ This document tracks the real implementation state of the repository and the hig
 - The renderer footer now shows the runtime app version reported by Electron so packaged builds can display the same version number used by automated releases
 - Synced-folder cloud sync now exists through immutable operation files, periodic checkpoints, local outbox handling, and a settings/status panel in the renderer
 - First-time synced-folder bootstrap now exports an initial checkpoint into an empty remote folder and blocks silent linking when a populated remote folder conflicts with unsynchronized local data
+- Sync bootstrap now refuses to export local seed state into a populated remote folder before a valid remote import succeeds, and invalid checkpoints/orphan remote operations are rejected instead of contaminating the workspace
 - GitHub release/version automation configured for `main`
 - Windows release packaging simplified to NSIS installer only
 - Packaged Windows builds now use in-app update checks backed by GitHub Releases and `electron-updater`, including background download and restart-to-install flow

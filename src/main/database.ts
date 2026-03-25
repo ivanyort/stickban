@@ -11,6 +11,7 @@ import type {
   SyncCheckpoint,
   SyncNotice,
   SyncOperation,
+  SyncWorkspaceSnapshot,
   SyncVersion,
   WorkspaceRecord
 } from '../shared/types'
@@ -48,6 +49,15 @@ let operationEmitter: OperationEmitter | null = null
 
 function now(): string {
   return new Date().toISOString()
+}
+
+function createNotice(level: SyncNotice['level'], message: string): SyncNotice {
+  return {
+    id: createId(),
+    level,
+    message,
+    createdAtUtc: now()
+  }
 }
 
 function createId(): string {
@@ -208,6 +218,35 @@ function getAppliedOperationIds(): string[] {
 function getAppliedOperationCount(): number {
   const row = getDb().prepare('SELECT COUNT(*) AS count FROM applied_operations').get() as { count: number }
   return row.count
+}
+
+function validateWorkspaceSnapshot(workspace: SyncWorkspaceSnapshot): string | null {
+  const liveBoards = new Set(workspace.boards.filter((board) => !board.deletedAt).map((board) => board.id))
+  const liveColumns = workspace.columns.filter((column) => !column.deletedAt)
+  const liveCards = workspace.cards.filter((card) => !card.deletedAt)
+  const liveColumnIds = new Set(liveColumns.map((column) => column.id))
+
+  if ((liveColumns.length > 0 || liveCards.length > 0) && liveBoards.size === 0) {
+    return 'Workspace snapshot is invalid because it contains active columns or cards without any active board.'
+  }
+
+  for (const column of liveColumns) {
+    if (!liveBoards.has(column.boardId)) {
+      return `Workspace snapshot is invalid because column ${column.id} points to missing board ${column.boardId}.`
+    }
+  }
+
+  for (const card of liveCards) {
+    if (!liveColumnIds.has(card.columnId)) {
+      return `Workspace snapshot is invalid because card ${card.id} points to missing column ${card.columnId}.`
+    }
+  }
+
+  if (workspace.activeBoardId && liveBoards.size > 0 && !liveBoards.has(workspace.activeBoardId)) {
+    return `Workspace snapshot is invalid because activeBoardId ${workspace.activeBoardId} does not exist among active boards.`
+  }
+
+  return null
 }
 
 function sortRowsByOrder<T extends { id: string; order_key: number }>(rows: T[]): T[] {
@@ -796,7 +835,12 @@ function applyColumnCreate(operation: SyncOperation): SyncNotice[] {
     .prepare('SELECT deleted_at FROM boards WHERE id = ?')
     .get(boardId) as { deleted_at: string | null } | undefined
   if (!board || board.deleted_at) {
-    return []
+    return [
+      createNotice(
+        'warning',
+        `Skipped remote column.create ${operation.operationId.slice(0, 8)} because board ${boardId} does not exist locally.`
+      )
+    ]
   }
 
   const existing = getDb()
@@ -886,6 +930,18 @@ function applyColumnMove(operation: SyncOperation): SyncNotice[] {
     return []
   }
 
+  const targetBoard = getDb()
+    .prepare('SELECT deleted_at FROM boards WHERE id = ?')
+    .get(boardId) as { deleted_at: string | null } | undefined
+  if (!targetBoard || targetBoard.deleted_at) {
+    return [
+      createNotice(
+        'warning',
+        `Skipped remote column.move ${operation.operationId.slice(0, 8)} because target board ${boardId} does not exist locally.`
+      )
+    ]
+  }
+
   const row = getDb()
     .prepare('SELECT sync_state, deleted_at, board_id FROM columns WHERE id = ?')
     .get(columnId) as { sync_state: string; deleted_at: string | null; board_id: string } | undefined
@@ -932,6 +988,18 @@ function applyCardCreate(operation: SyncOperation): SyncNotice[] {
   const orderKey = Number(operation.payload.orderKey ?? ORDER_GAP)
   if (!cardId || !columnId || !title) {
     return []
+  }
+
+  const column = getDb()
+    .prepare('SELECT deleted_at FROM columns WHERE id = ?')
+    .get(columnId) as { deleted_at: string | null } | undefined
+  if (!column || column.deleted_at) {
+    return [
+      createNotice(
+        'warning',
+        `Skipped remote card.create ${operation.operationId.slice(0, 8)} because column ${columnId} does not exist locally.`
+      )
+    ]
   }
 
   const existing = getDb()
@@ -1028,6 +1096,18 @@ function applyCardMove(operation: SyncOperation): SyncNotice[] {
   const orderKey = Number(operation.payload.orderKey ?? ORDER_GAP)
   if (!cardId || !columnId) {
     return []
+  }
+
+  const targetColumn = getDb()
+    .prepare('SELECT deleted_at FROM columns WHERE id = ?')
+    .get(columnId) as { deleted_at: string | null } | undefined
+  if (!targetColumn || targetColumn.deleted_at) {
+    return [
+      createNotice(
+        'warning',
+        `Skipped remote card.move ${operation.operationId.slice(0, 8)} because target column ${columnId} does not exist locally.`
+      )
+    ]
   }
 
   const row = getDb()
@@ -1398,7 +1478,7 @@ export function exportCheckpoint(): SyncCheckpoint {
   const database = getDb()
   const checkpointId = createId()
   const createdAtUtc = now()
-  return {
+  const checkpoint: SyncCheckpoint = {
     checkpointId,
     deviceId: getOrCreateDeviceId(),
     createdAtUtc,
@@ -1475,9 +1555,21 @@ export function exportCheckpoint(): SyncCheckpoint {
       maxClock: getCurrentLamportClock()
     }
   }
+
+  const validationError = validateWorkspaceSnapshot(checkpoint.workspace)
+  if (validationError) {
+    throw new Error(validationError)
+  }
+
+  return checkpoint
 }
 
 export function importCheckpoint(checkpoint: SyncCheckpoint): void {
+  const validationError = validateWorkspaceSnapshot(checkpoint.workspace)
+  if (validationError) {
+    throw new Error(validationError)
+  }
+
   const database = getDb()
   const restore = database.transaction(() => {
     database.prepare('DELETE FROM boards').run()
