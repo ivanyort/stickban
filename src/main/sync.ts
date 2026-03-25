@@ -551,11 +551,18 @@ export class SyncManager {
 
     const localClock = getLocalClock()
     const localApplied = getAppliedOperationsCount()
+    const localWorkspace = getWorkspaceBootstrapState()
+    const remoteHasWorkspaceData =
+      latest.workspace.boards.length > 0 || latest.workspace.columns.length > 0 || latest.workspace.cards.length > 0
+    const localNeedsBootstrap = localWorkspace.boardCount === 0 || localWorkspace.isPristineSeedWorkspace
+
     if (latest.maxClock < localClock) {
       return false
     }
     if (latest.maxClock === localClock && latest.workspace.appliedOperationIds.length <= localApplied) {
-      return false
+      if (!(localNeedsBootstrap && remoteHasWorkspaceData)) {
+        return false
+      }
     }
 
     importCheckpoint(latest)
