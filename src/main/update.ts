@@ -61,6 +61,7 @@ export class UpdateManager {
     autoUpdater.on('checking-for-update', () => {
       this.status.phase = 'checking'
       this.status.downloadProgressPercent = null
+      this.status.lastCheckedAtUtc = now()
       this.status.lastError = null
     })
 

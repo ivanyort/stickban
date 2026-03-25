@@ -289,6 +289,8 @@ function App(): JSX.Element {
           ? 'Saved locally • Sync pending'
           : `Saved locally • Cloud sync up to date${lastSyncRelative ? ` • ${lastSyncRelative}` : ''}`
   const updateBadge = getUpdateFooterBadge(updateStatus)
+  const updateCheckLabel = getUpdateCheckLabel(updateStatus)
+  const updateBanner = getUpdateBanner(updateStatus)
   const footerStatusDotClass = saving
     ? 'bg-amber-500'
     : syncStatus?.configured && (syncStatus.syncing || syncStatus.pendingLocalOperations > 0)
@@ -622,6 +624,37 @@ function App(): JSX.Element {
         </div>
       ) : null}
 
+      {updateBanner ? (
+        <div className="px-4 pt-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-foreground">
+            <div>
+              <div className="font-medium">{updateBanner.title}</div>
+              <div className="mt-1 text-xs text-muted-foreground">{updateBanner.description}</div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {updateStatus?.phase === 'available' ? (
+                <Button size="sm" variant="outline" onClick={() => void downloadUpdate()} className="gap-1.5 text-xs">
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Download update</span>
+                </Button>
+              ) : null}
+              {updateStatus?.phase === 'downloaded' ? (
+                <Button size="sm" onClick={() => void quitAndInstallUpdate()} className="gap-1.5 text-xs">
+                  <ArrowUpCircle className="h-3.5 w-3.5" />
+                  <span>Restart to update</span>
+                </Button>
+              ) : null}
+              {updateStatus?.phase === 'error' ? (
+                <Button size="sm" variant="outline" onClick={() => void checkForUpdates()} className="gap-1.5 text-xs">
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  <span>Check again</span>
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <main className="flex flex-1 gap-4 overflow-x-auto p-4">
         {orderedColumns.map((column) => (
           <BoardColumn
@@ -876,6 +909,7 @@ function App(): JSX.Element {
         </div>
         <div className="flex items-center gap-1.5">
           {updateBadge ? <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">{updateBadge}</span> : null}
+          {updateCheckLabel ? <span className="text-[11px] text-muted-foreground">{updateCheckLabel}</span> : null}
           <div className={cn('h-1.5 w-1.5 rounded-full', footerStatusDotClass)} />
           <span>{footerStatus}</span>
         </div>
@@ -982,6 +1016,49 @@ function getUpdateFooterBadge(status: UpdateStatus | null): string | null {
 
   if (status.phase === 'downloading') {
     return status.downloadProgressPercent !== null ? `Updating ${status.downloadProgressPercent}%` : 'Updating'
+  }
+
+  return null
+}
+
+function getUpdateCheckLabel(status: UpdateStatus | null): string | null {
+  if (!status?.supported || !status.lastCheckedAtUtc) {
+    return null
+  }
+
+  if (status.phase === 'checking') {
+    return 'Checking updates...'
+  }
+
+  return `Updates checked ${formatSyncRelative(status.lastCheckedAtUtc)}`
+}
+
+function getUpdateBanner(
+  status: UpdateStatus | null
+): { title: string; description: string } | null {
+  if (!status?.supported) {
+    return null
+  }
+
+  if (status.phase === 'available') {
+    return {
+      title: `Update ${status.availableUpdate?.version ?? ''} is available`,
+      description: 'Stickban already checks GitHub Releases automatically and can download the new version in the background.'
+    }
+  }
+
+  if (status.phase === 'downloaded') {
+    return {
+      title: `Update ${status.downloadedUpdate?.version ?? status.availableUpdate?.version ?? ''} is ready`,
+      description: 'The installer has already been downloaded. Restart the app to finish the update.'
+    }
+  }
+
+  if (status.phase === 'error' && status.lastError) {
+    return {
+      title: 'Automatic update check failed',
+      description: status.lastError.message
+    }
   }
 
   return null
