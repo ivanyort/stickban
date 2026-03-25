@@ -18,9 +18,11 @@ import {
 } from './database'
 import type { BoardDraft, CardDraft, CardMovePayload, ColumnDraft, ColumnMovePayload } from '../shared/types'
 import { SyncManager } from './sync'
+import { UpdateManager } from './update'
 
 let mainWindow: BrowserWindow | null = null
 let syncManager: SyncManager | null = null
+let updateManager: UpdateManager | null = null
 
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -135,6 +137,12 @@ function registerIpc(): void {
   ipcMain.handle('sync:adoptRemoteWorkspace', () => syncManager?.adoptRemoteWorkspace())
   ipcMain.handle('sync:getFolderInfo', () => syncManager?.getFolderInfo())
   ipcMain.handle('sync:getNotices', () => syncManager?.getNotices())
+  ipcMain.handle('update:getStatus', () => updateManager?.getStatus())
+  ipcMain.handle('update:check', () => updateManager?.checkForUpdates())
+  ipcMain.handle('update:download', () => updateManager?.downloadUpdate())
+  ipcMain.handle('update:quitAndInstall', () => {
+    updateManager?.quitAndInstallUpdate()
+  })
 }
 
 app.whenReady().then(() => {
@@ -142,6 +150,8 @@ app.whenReady().then(() => {
   initializeDatabase(app.getPath('userData'))
   syncManager = new SyncManager(app.getPath('userData'))
   syncManager.initialize()
+  updateManager = new UpdateManager()
+  updateManager.initialize()
   registerIpc()
   mainWindow = createMainWindow()
 
@@ -153,6 +163,7 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => {
+  updateManager?.dispose()
   if (process.platform !== 'darwin') {
     app.quit()
   }

@@ -123,7 +123,7 @@ A estrutura abaixo esta planejada, mas ainda nao foi implementada.
 Para o roadmap detalhado, veja [`ROADMAP.md`](./ROADMAP.md).
 
 - Atual: workspace local, multiplos quadros, colunas customizaveis, drag and drop de colunas, persistencia em SQLite, always-on-top e sync em pasta sincronizada
-- Proxima fase: verificacao automatica de atualizacoes, interface multi idiomas, system tray, temas e hardening do sync
+- Proxima fase: interface multi idiomas, system tray, temas e hardening do sync
 - Futuro: campos customizados, notificacoes, inspecao mais rica de conflitos e recuperacao, app mobile complementar
 
 ## Documentos do Repositorio
@@ -149,6 +149,7 @@ Para o roadmap detalhado, veja [`ROADMAP.md`](./ROADMAP.md).
 - `feat` sobe minor, `fix` e tipos operacionais sobem patch, e `BREAKING CHANGE` ou `type!` sobem major
 - Artefatos publicos de release sao gerados atualmente apenas para Windows
 - As releases de Windows sao distribuidas como instalador NSIS
+- Builds empacotadas de Windows agora verificam atualizacoes em GitHub Releases dentro do app e podem reiniciar para instalar um update baixado
 - O empacotamento para Linux continua disponivel localmente, mas artefatos Linux nao sao publicados nas GitHub Releases neste momento
 - A landing page publica e publicada separadamente do pipeline de release do app desktop
 
@@ -166,6 +167,7 @@ O repositorio agora contem um scaffold executavel local-first em Electron/React/
 O estado atual do repositorio esta documentado em [`IMPLEMENTATION.md`](./IMPLEMENTATION.md).
 O modelo atual de sync funciona sem servicos pagos, APIs de provedores, OAuth ou infraestrutura cloud gerenciada. Ele depende de uma pasta ja sincronizada pelo cliente de nuvem instalado pelo usuario.
 O rodape do app exibe a versao de runtime exposta pelo Electron, pensada para coincidir com a versao injetada nas releases empacotadas pelo workflow de GitHub Actions.
+Builds empacotadas de Windows agora tambem verificam atualizacoes em GitHub Releases no startup e periodicamente durante a sessao.
 
 ## Licenca
 

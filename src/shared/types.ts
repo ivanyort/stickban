@@ -156,6 +156,39 @@ export interface SyncStatus {
   notices: SyncNotice[]
 }
 
+export type UpdatePhase =
+  | 'disabled'
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'downloading'
+  | 'downloaded'
+  | 'up-to-date'
+  | 'error'
+
+export interface UpdateInfoSummary {
+  version: string
+  releaseName: string | null
+  releaseDateUtc: string | null
+}
+
+export interface UpdateError {
+  message: string
+  atUtc: string
+}
+
+export interface UpdateStatus {
+  supported: boolean
+  phase: UpdatePhase
+  currentVersion: string
+  availableUpdate: UpdateInfoSummary | null
+  downloadedUpdate: UpdateInfoSummary | null
+  downloadProgressPercent: number | null
+  lastCheckedAtUtc: string | null
+  lastDownloadedAtUtc: string | null
+  lastError: UpdateError | null
+ }
+
 export interface CardDraft {
   title: string
   description: string
@@ -207,4 +240,8 @@ export interface StickbanApi {
   adoptRemoteWorkspace: () => Promise<SyncStatus>
   getSyncFolderInfo: () => Promise<SyncFolderConfig | null>
   getSyncNotices: () => Promise<SyncNotice[]>
+  getUpdateStatus: () => Promise<UpdateStatus>
+  checkForUpdates: () => Promise<UpdateStatus>
+  downloadUpdate: () => Promise<UpdateStatus>
+  quitAndInstallUpdate: () => Promise<void>
 }

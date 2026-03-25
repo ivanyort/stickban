@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  ArrowUpCircle,
   Cloud,
   CloudOff,
+  Download,
   FolderSync,
   GripVertical,
   Minus,
@@ -15,7 +17,7 @@ import {
   Trash2,
   X
 } from 'lucide-react'
-import type { BoardSummary, CardDraft, CardRecord, ColumnRecord } from '@shared/types'
+import type { BoardSummary, CardDraft, CardRecord, ColumnRecord, UpdateStatus } from '@shared/types'
 import { Button } from '@renderer/components/ui/button'
 import { Input } from '@renderer/components/ui/input'
 import {
@@ -44,6 +46,7 @@ function App(): JSX.Element {
     syncStatus,
     syncFolderInfo,
     syncNotices,
+    updateStatus,
     editingCard,
     initialize,
     createBoard,
@@ -68,6 +71,10 @@ function App(): JSX.Element {
     syncNow,
     adoptRemoteWorkspace,
     refreshSyncStatus,
+    refreshUpdateStatus,
+    checkForUpdates,
+    downloadUpdate,
+    quitAndInstallUpdate,
     refreshWorkspace
   } = useBoardStore()
   const [editingBoardId, setEditingBoardId] = useState<string | null>(null)
@@ -109,11 +116,12 @@ function App(): JSX.Element {
   useEffect(() => {
     const interval = window.setInterval(() => {
       void refreshSyncStatus()
+      void refreshUpdateStatus()
       void refreshWorkspace()
     }, 20000)
 
     return () => window.clearInterval(interval)
-  }, [refreshSyncStatus, refreshWorkspace])
+  }, [refreshSyncStatus, refreshUpdateStatus, refreshWorkspace])
 
   useEffect(() => {
     if (editingBoardId && !boards.some((board) => board.id === editingBoardId)) {
@@ -280,6 +288,7 @@ function App(): JSX.Element {
         : syncStatus.pendingLocalOperations > 0
           ? 'Saved locally • Sync pending'
           : `Saved locally • Cloud sync up to date${lastSyncRelative ? ` • ${lastSyncRelative}` : ''}`
+  const updateBadge = getUpdateFooterBadge(updateStatus)
   const footerStatusDotClass = saving
     ? 'bg-amber-500'
     : syncStatus?.configured && (syncStatus.syncing || syncStatus.pendingLocalOperations > 0)
@@ -796,6 +805,64 @@ function App(): JSX.Element {
                 )}
               </div>
             </div>
+
+            <div className="rounded-2xl border border-border/80 bg-background/80 px-3 py-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    App update
+                  </div>
+                  <div className="mt-2 text-sm font-medium text-foreground">{getUpdateHeadline(updateStatus)}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">{getUpdateDescription(updateStatus)}</div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={() => void checkForUpdates()} className="gap-1.5 text-xs">
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    <span>Check now</span>
+                  </Button>
+                  {updateStatus?.phase === 'available' || updateStatus?.phase === 'error' ? (
+                    <Button size="sm" variant="outline" onClick={() => void downloadUpdate()} className="gap-1.5 text-xs">
+                      <Download className="h-3.5 w-3.5" />
+                      <span>Download update</span>
+                    </Button>
+                  ) : null}
+                  {updateStatus?.phase === 'downloaded' ? (
+                    <Button size="sm" onClick={() => void quitAndInstallUpdate()} className="gap-1.5 text-xs">
+                      <ArrowUpCircle className="h-3.5 w-3.5" />
+                      <span>Restart to update</span>
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <SyncMetric label="Current version" value={updateStatus?.currentVersion ?? appVersion} />
+                <SyncMetric
+                  label="Available version"
+                  value={updateStatus?.availableUpdate?.version ?? updateStatus?.downloadedUpdate?.version ?? 'None'}
+                />
+                <SyncMetric
+                  label="Last check"
+                  value={updateStatus?.lastCheckedAtUtc ? formatSyncMoment(updateStatus.lastCheckedAtUtc) : 'Not yet'}
+                />
+                <SyncMetric
+                  label="Download"
+                  value={
+                    updateStatus?.phase === 'downloading' && updateStatus.downloadProgressPercent !== null
+                      ? `${updateStatus.downloadProgressPercent}%`
+                      : updateStatus?.phase === 'downloaded'
+                        ? 'Ready to install'
+                        : 'Idle'
+                  }
+                />
+              </div>
+
+              {updateStatus?.lastError ? (
+                <div className="mt-3 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+                  {updateStatus.lastError.message}
+                </div>
+              ) : null}
+            </div>
           </div>
         </section>
       ) : null}
@@ -808,6 +875,7 @@ function App(): JSX.Element {
           <span>Version {appVersion}</span>
         </div>
         <div className="flex items-center gap-1.5">
+          {updateBadge ? <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">{updateBadge}</span> : null}
           <div className={cn('h-1.5 w-1.5 rounded-full', footerStatusDotClass)} />
           <span>{footerStatus}</span>
         </div>
@@ -862,6 +930,61 @@ function formatSyncRelative(value: string): string {
 
 function formatSyncMoment(value: string): string {
   return `${formatSyncRelative(value)} • ${formatSyncDate(value)}`
+}
+
+function getUpdateHeadline(status: UpdateStatus | null): string {
+  if (!status?.supported) {
+    return 'Automatic updates are available only in packaged Windows builds.'
+  }
+
+  switch (status.phase) {
+    case 'checking':
+      return 'Checking for updates'
+    case 'available':
+      return `Update ${status.availableUpdate?.version ?? ''} found`
+    case 'downloading':
+      return `Downloading update${status.downloadProgressPercent !== null ? ` (${status.downloadProgressPercent}%)` : ''}`
+    case 'downloaded':
+      return `Update ${status.downloadedUpdate?.version ?? status.availableUpdate?.version ?? ''} is ready to install`
+    case 'up-to-date':
+      return 'Stickban is up to date'
+    case 'error':
+      return 'Update check failed'
+    default:
+      return 'Automatic app updates'
+  }
+}
+
+function getUpdateDescription(status: UpdateStatus | null): string {
+  if (!status?.supported) {
+    return 'Dev builds and non-Windows packaged builds do not run the GitHub Releases updater flow.'
+  }
+
+  if (status.phase === 'downloaded') {
+    return 'The installer package is already cached locally. Restart the app to finish the update.'
+  }
+
+  if (status.phase === 'available' || status.phase === 'downloading') {
+    return 'Stickban downloads Windows releases from GitHub in the background and keeps your current session usable.'
+  }
+
+  return 'Stickban checks public GitHub Releases on startup and periodically during the session.'
+}
+
+function getUpdateFooterBadge(status: UpdateStatus | null): string | null {
+  if (!status?.supported) {
+    return null
+  }
+
+  if (status.phase === 'downloaded') {
+    return 'Update ready'
+  }
+
+  if (status.phase === 'downloading') {
+    return status.downloadProgressPercent !== null ? `Updating ${status.downloadProgressPercent}%` : 'Updating'
+  }
+
+  return null
 }
 
 function SyncMetric({ label, value }: { label: string; value: string }): JSX.Element {

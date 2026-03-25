@@ -34,7 +34,11 @@ const api: StickbanApi = {
   syncNow: () => ipcRenderer.invoke('sync:runNow'),
   adoptRemoteWorkspace: () => ipcRenderer.invoke('sync:adoptRemoteWorkspace'),
   getSyncFolderInfo: () => ipcRenderer.invoke('sync:getFolderInfo'),
-  getSyncNotices: () => ipcRenderer.invoke('sync:getNotices')
+  getSyncNotices: () => ipcRenderer.invoke('sync:getNotices'),
+  getUpdateStatus: () => ipcRenderer.invoke('update:getStatus'),
+  checkForUpdates: () => ipcRenderer.invoke('update:check'),
+  downloadUpdate: () => ipcRenderer.invoke('update:download'),
+  quitAndInstallUpdate: () => ipcRenderer.invoke('update:quitAndInstall')
 }
 
 contextBridge.exposeInMainWorld('stickban', api)

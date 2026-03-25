@@ -123,7 +123,7 @@ The structure below is planned, not implemented yet.
 For the detailed roadmap, see [`ROADMAP.md`](./ROADMAP.md).
 
 - Current: local workspace, multiple boards, customizable columns, column drag and drop, SQLite persistence, always-on-top, synced-folder cloud sync
-- Next: automatic update checks, multi-language interface, system tray, themes, sync hardening
+- Next: multi-language interface, system tray, themes, sync hardening
 - Future: custom fields, notifications, richer conflict inspection and recovery, mobile companion
 
 ## Repository Documents
@@ -149,6 +149,7 @@ For the detailed roadmap, see [`ROADMAP.md`](./ROADMAP.md).
 - `feat` bumps minor, `fix` and operational commit types bump patch, and `BREAKING CHANGE` or `type!` bumps major
 - Public release artifacts are currently produced for Windows only
 - Windows releases are distributed as an NSIS installer
+- Packaged Windows builds now check public GitHub Releases for updates in-app and can restart to install a downloaded update
 - Linux packaging remains available for local builds, but Linux artifacts are not currently published in GitHub Releases
 - The public landing page is deployed separately from the desktop release pipeline
 
@@ -166,6 +167,7 @@ The repository now contains a runnable local-first Electron/React/TypeScript sca
 The current repository state is tracked in [`IMPLEMENTATION.md`](./IMPLEMENTATION.md).
 The current sync model works without paid services, provider APIs, OAuth, or managed cloud infrastructure. It depends on a folder already synchronized by the user's installed cloud drive client.
 The app footer displays the runtime application version exposed by Electron, which is intended to match the version injected into packaged releases by the GitHub Actions release workflow.
+Packaged Windows builds now also check GitHub Releases for updates on startup and periodically during the session.
 
 ## License
 

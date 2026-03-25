@@ -38,6 +38,7 @@ This document tracks the real implementation state of the repository and the hig
 - First-time synced-folder bootstrap now exports an initial checkpoint into an empty remote folder and blocks silent linking when a populated remote folder conflicts with unsynchronized local data
 - GitHub release/version automation configured for `main`
 - Windows release packaging simplified to NSIS installer only
+- Packaged Windows builds now use in-app update checks backed by GitHub Releases and `electron-updater`, including background download and restart-to-install flow
 - Public GitHub Releases currently publish Windows artifacts only
 - Public landing page scaffold delivered under `site/`
 - GitHub Pages deployment workflow configured with repository-level fork protection
@@ -48,6 +49,7 @@ This document tracks the real implementation state of the repository and the hig
 - The current codebase implements the first local-first cloud-sync milestone
 - The current milestone includes multiple boards, custom columns, and synced-folder replication inside the local-first workspace
 - The next major step is sync hardening, recovery UX, and deeper manual validation across multiple devices
+- Automatic updates are currently intended only for packaged Windows builds; development builds and non-Windows packages stay outside this flow
 - The current scaffold should be usable without subscriptions, paid services, provider APIs, or managed cloud dependencies
 
 ## Not Implemented Yet

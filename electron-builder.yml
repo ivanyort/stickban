@@ -19,3 +19,8 @@ nsis:
   perMachine: false
   allowToChangeInstallationDirectory: true
 artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+publish:
+  - provider: github
+    owner: ivanyort
+    repo: stickban
+    releaseType: release

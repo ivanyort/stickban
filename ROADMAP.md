@@ -37,7 +37,6 @@ Status: `planned`
 Goals and milestones:
 
 - Synced-folder cloud sync hardening
-- Automatic update checks and in-app version update flow
 - Multi-language interface support
 - System tray integration
 - Theme support

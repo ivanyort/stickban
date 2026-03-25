@@ -10,6 +10,7 @@ import type {
   SyncFolderConfig,
   SyncNotice,
   SyncStatus,
+  UpdateStatus,
   WorkspaceRecord
 } from '@shared/types'
 
@@ -27,6 +28,7 @@ interface BoardState {
   syncStatus: SyncStatus | null
   syncFolderInfo: SyncFolderConfig | null
   syncNotices: SyncNotice[]
+  updateStatus: UpdateStatus | null
   editingCard: CardRecord | null
   initialize: () => Promise<void>
   createBoard: (draft: BoardDraft) => Promise<void>
@@ -51,6 +53,10 @@ interface BoardState {
   syncNow: () => Promise<void>
   adoptRemoteWorkspace: () => Promise<void>
   refreshSyncStatus: () => Promise<void>
+  refreshUpdateStatus: () => Promise<void>
+  checkForUpdates: () => Promise<void>
+  downloadUpdate: () => Promise<void>
+  quitAndInstallUpdate: () => Promise<void>
   refreshWorkspace: () => Promise<void>
 }
 
@@ -76,17 +82,19 @@ export const useBoardStore = create<BoardState>((set) => ({
   syncStatus: null,
   syncFolderInfo: null,
   syncNotices: [],
+  updateStatus: null,
   editingCard: null,
   initialize: async () => {
     set({ loading: true, error: null })
 
     try {
-      const [workspace, windowState, syncStatus, syncFolderInfo, syncNotices] = await Promise.all([
+      const [workspace, windowState, syncStatus, syncFolderInfo, syncNotices, updateStatus] = await Promise.all([
         window.stickban.getWorkspace(),
         window.stickban.getWindowState(),
         window.stickban.getSyncStatus(),
         window.stickban.getSyncFolderInfo(),
-        window.stickban.getSyncNotices()
+        window.stickban.getSyncNotices(),
+        window.stickban.getUpdateStatus()
       ])
 
       set({
@@ -98,6 +106,7 @@ export const useBoardStore = create<BoardState>((set) => ({
         syncStatus,
         syncFolderInfo,
         syncNotices,
+        updateStatus,
         loading: false
       })
     } catch (error) {
@@ -251,6 +260,41 @@ export const useBoardStore = create<BoardState>((set) => ({
       set({ syncStatus, syncFolderInfo, syncNotices })
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'Failed to refresh sync status' })
+    }
+  },
+  refreshUpdateStatus: async () => {
+    try {
+      const updateStatus = await window.stickban.getUpdateStatus()
+      set({ updateStatus })
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to refresh update status' })
+    }
+  },
+  checkForUpdates: async () => {
+    try {
+      set({ error: null })
+      await window.stickban.checkForUpdates()
+      const updateStatus = await window.stickban.getUpdateStatus()
+      set({ updateStatus })
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to check for updates' })
+    }
+  },
+  downloadUpdate: async () => {
+    try {
+      set({ error: null })
+      await window.stickban.downloadUpdate()
+      const updateStatus = await window.stickban.getUpdateStatus()
+      set({ updateStatus })
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to download update' })
+    }
+  },
+  quitAndInstallUpdate: async () => {
+    try {
+      await window.stickban.quitAndInstallUpdate()
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to install update' })
     }
   },
   refreshWorkspace: async () => {

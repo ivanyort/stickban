@@ -86,7 +86,7 @@ jobs:
         shell: pwsh
         run: |
           $files = Get-ChildItem dist -File | Where-Object {
-            $_.Extension -eq '.exe'
+            $_.Extension -in @('.exe', '.yml', '.blockmap')
           }
           if ($files.Count -eq 0) {
             Write-Error "No Windows artifacts were generated"

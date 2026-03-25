@@ -196,6 +196,20 @@
   The product no longer depends on Google Drive APIs or OAuth. Sync correctness now depends on operation-log replay, tombstones, and checkpoint recovery instead of a single shared snapshot file. Public documentation must describe synced-folder cloud sync as current repository reality.
   O produto deixa de depender de APIs do Google Drive ou OAuth. A corretude do sync agora depende de replay do log de operacoes, tombstones e recuperacao por checkpoints, em vez de um unico arquivo de snapshot compartilhado. A documentacao publica deve descrever o sync por pasta sincronizada como realidade atual do repositorio.
 
+## D-014: Windows Auto-update via GitHub Releases
+
+- Date / Data: 2026-03-25
+- Status: accepted
+- Context / Contexto:
+  The repository already builds Windows NSIS installers and publishes them through GitHub Releases, but packaged users still need a manual path to discover and install newer versions.
+  O repositorio ja gera instaladores NSIS para Windows e os publica via GitHub Releases, mas usuarios empacotados ainda precisam de um caminho manual para descobrir e instalar versoes novas.
+- Decision / Decisao:
+  Use `electron-updater` with the GitHub provider for packaged Windows builds only. The app should check for updates on startup and periodically during the session, download updates in the background, and offer restart-to-install once the package is ready.
+  Usar `electron-updater` com provider GitHub apenas para builds empacotadas de Windows. O app deve verificar atualizacoes no startup e periodicamente durante a sessao, baixar updates em background e oferecer reinicio para instalar quando o pacote estiver pronto.
+- Consequences / Consequencias:
+  The release workflow must publish updater metadata alongside the Windows installer, the main process needs a dedicated update service and IPC surface, and the renderer must expose update status without mixing it with sync semantics. Development builds and non-Windows packages stay outside the automatic update flow.
+  O workflow de release passa a publicar metadata do updater junto com o instalador de Windows, o main process precisa de um servico dedicado de update e superficie IPC, e o renderer deve expor o estado de update sem misturar isso com a semantica de sync. Builds de desenvolvimento e pacotes fora de Windows ficam fora do fluxo automatico de update.
+
 ## Notes / Notas
 
 **EN:** Entries marked as `planned` reflect current intended direction from the specification and should be validated during implementation.  
