@@ -58,16 +58,16 @@
   The product direction already defines the intended frontend stack for state, styling, and drag-and-drop interactions.
   A direcao do produto ja define a stack pretendida para estado, estilo e interacoes de drag and drop.
 - Decision / Decisao:
-  Use Zustand for state management, Tailwind CSS for styling, and `dnd-kit` for drag and drop.
-  Usar Zustand para gerenciamento de estado, Tailwind CSS para estilos e `dnd-kit` para drag and drop.
+  Use Zustand for state management, Tailwind CSS for styling, and renderer-managed drag and drop interactions.
+  Usar Zustand para gerenciamento de estado, Tailwind CSS para estilos e interacoes de drag and drop gerenciadas no renderer.
 - Consequences / Consequencias:
-  Initial scaffold and component architecture should align with these libraries unless superseded by a newer recorded decision.
-  O scaffold inicial e a arquitetura de componentes devem se alinhar a essas bibliotecas, salvo decisao posterior registrada.
+  Initial scaffold and component architecture should align with this local renderer-centric interaction model unless superseded by a newer recorded decision.
+  O scaffold inicial e a arquitetura de componentes devem se alinhar a esse modelo de interacao centrado no renderer, salvo decisao posterior registrada.
 
 ## D-005: Sync Provider
 
 - Date / Data: 2026-03-22
-- Status: planned
+- Status: superseded
 - Context / Contexto:
   The product specification calls for optional sync across devices without making cloud storage the primary system of record.
   A especificacao do produto pede sincronizacao opcional entre dispositivos sem transformar a nuvem no sistema primario de registro.
@@ -77,11 +77,13 @@
 - Consequences / Consequencias:
   Auth, background sync, and remote file lifecycle can be deferred until after the first local milestone is stable.
   Autenticacao, sincronizacao em background e ciclo de vida de arquivos remotos podem ser adiados ate que o primeiro milestone local esteja estavel.
+  Superseded by D-013.
+  Substituida por D-013.
 
 ## D-006: Sync Strategy
 
 - Date / Data: 2026-03-22
-- Status: planned
+- Status: superseded
 - Context / Contexto:
   The project needs a simple first implementation path for synchronization.
   O projeto precisa de um primeiro caminho simples para implementacao da sincronizacao.
@@ -91,11 +93,13 @@
 - Consequences / Consequencias:
   Sync logic can start simpler, but future evolution may require more advanced merge behavior.
   A logica de sync pode comecar mais simples, mas evolucoes futuras podem exigir merge mais avancado.
+  Superseded by D-013.
+  Substituida por D-013.
 
 ## D-007: Conflict Resolution
 
 - Date / Data: 2026-03-22
-- Status: planned
+- Status: superseded
 - Context / Contexto:
   The MVP needs a deterministic conflict policy that is cheap to implement.
   O MVP precisa de uma politica deterministica de conflitos que seja barata de implementar.
@@ -105,6 +109,8 @@
 - Consequences / Consequencias:
   Conflict handling stays simple in early versions, but edge cases may later justify a stronger model.
   O tratamento de conflitos permanece simples nas versoes iniciais, mas casos limite podem justificar um modelo mais robusto no futuro.
+  Superseded by D-013.
+  Substituida por D-013.
 
 ## D-008: AI-Assisted Development Default
 
@@ -128,8 +134,8 @@
   The project should be implementable locally without paid services, subscriptions, cloud infrastructure, or unnecessary early complexity.
   O projeto deve ser implementavel localmente sem servicos pagos, assinaturas, infraestrutura cloud ou complexidade prematura desnecessaria.
 - Decision / Decisao:
-  Keep the initial scaffold focused on Electron, React + TypeScript, local SQLite via `better-sqlite3`, Zustand, Tailwind CSS, and `dnd-kit`, with a fully local workspace, persisted boards, board-specific columns, drag and drop, SQLite persistence, and always-on-top behavior. Exclude Google Drive sync, OAuth, and remote infrastructure from the first milestone.
-  Manter o scaffold inicial focado em Electron, React + TypeScript, SQLite local via `better-sqlite3`, Zustand, Tailwind CSS e `dnd-kit`, com um workspace totalmente local, quadros persistidos, colunas especificas por quadro, drag and drop, persistencia em SQLite e comportamento always-on-top. Deixar Google Drive sync, OAuth e infraestrutura remota fora do primeiro milestone.
+  Keep the initial scaffold focused on Electron, React + TypeScript, local SQLite via `better-sqlite3`, Zustand, Tailwind CSS, and renderer-managed drag interactions, with a fully local workspace, persisted boards, board-specific columns, drag and drop, SQLite persistence, and always-on-top behavior. Exclude provider APIs, OAuth, and managed remote infrastructure from the first milestone.
+  Manter o scaffold inicial focado em Electron, React + TypeScript, SQLite local via `better-sqlite3`, Zustand, Tailwind CSS e interacoes de drag gerenciadas no renderer, com um workspace totalmente local, quadros persistidos, colunas especificas por quadro, drag and drop, persistencia em SQLite e comportamento always-on-top. Deixar APIs de provedores, OAuth e infraestrutura remota gerenciada fora do primeiro milestone.
 - Consequences / Consequencias:
   The first implementation milestone remains local-only and cost-free to develop and run, while remote synchronization stays as a later phase capability.
   O primeiro milestone de implementacao permanece apenas local e sem custo para desenvolver e executar, enquanto a sincronizacao remota permanece como capability de fase posterior.

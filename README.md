@@ -31,11 +31,11 @@ The current runnable milestone is still local-first, but now also includes cloud
 - SQLite via `better-sqlite3`
 - Zustand for state management
 - Tailwind CSS
-- `dnd-kit` for drag and drop
+- Custom drag interactions in the renderer
 
 ## Initial Implementation Cut
 
-- Keep the local desktop stack: Electron, React + TypeScript, `better-sqlite3`, Zustand, Tailwind CSS, and `dnd-kit`
+- Keep the local desktop stack: Electron, React + TypeScript, `better-sqlite3`, Zustand, Tailwind CSS, and renderer-managed drag interactions
 - Keep SQLite as the operational source of truth while sync propagates immutable operation files plus periodic checkpoints through a synced folder
 - Avoid provider APIs, OAuth, and managed cloud infrastructure
 - Focus the current milestone on a local-first workspace with multiple boards, board-specific columns, inline column rename, column drag and drop, SQLite persistence, always-on-top behavior, and synced-folder cloud sync

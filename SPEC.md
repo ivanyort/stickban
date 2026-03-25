@@ -27,7 +27,7 @@ Stickban is a lightweight desktop Kanban application designed to stay visible an
 - SQLite (better-sqlite3)
 - Zustand (state management)
 - TailwindCSS
-- dnd-kit (drag & drop)
+- Renderer-managed drag and drop
 
 ---
 
@@ -65,7 +65,7 @@ npm run build
 - Drag cards between columns
 - Toggle always-on-top to keep it visible
 - Work normally even without internet
-- Sync will happen automatically when online
+- If a synced folder is configured, sync runs automatically through local file replication
 
 ---
 
@@ -91,11 +91,13 @@ Main entities:
 Each entity includes:
 
 - id (UUID)
-- createdAt
-- updatedAt
-- deletedAt (soft delete)
-- version
-- lastModifiedByDeviceId
+- deletedAt when sync safety matters
+- sync metadata needed for conflict handling and replay
+
+Current implementation notes:
+
+- Cards persist `createdAt` and `updatedAt`
+- Boards and columns currently persist ordering, tombstones, and sync state instead of dedicated timestamp/version columns
 
 ---
 
@@ -108,7 +110,8 @@ Each entity includes:
 ### Sync triggers:
 
 - App startup
-- Connectivity restored
+- Synced folder configured
+- Local changes with debounce
 - Background interval
 - Manual trigger
 
@@ -120,7 +123,7 @@ Stickban works fully offline:
 
 - Create, edit, move, delete cards without internet
 - Changes are stored locally
-- Sync resumes automatically when online
+- Sync resumes when the configured synced folder becomes available again and the local file-based sync loop runs
 
 ---
 

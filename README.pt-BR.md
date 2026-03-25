@@ -31,11 +31,11 @@ O milestone executavel atual continua local-first, mas agora tambem inclui sync 
 - SQLite via `better-sqlite3`
 - Zustand para gerenciamento de estado
 - Tailwind CSS
-- `dnd-kit` para drag and drop
+- Interacoes de drag and drop gerenciadas no renderer
 
 ## Recorte Inicial de Implementacao
 
-- Manter o stack desktop local: Electron, React + TypeScript, `better-sqlite3`, Zustand, Tailwind CSS e `dnd-kit`
+- Manter o stack desktop local: Electron, React + TypeScript, `better-sqlite3`, Zustand, Tailwind CSS e interacoes de drag and drop gerenciadas no renderer
 - Manter o SQLite como fonte operacional de verdade enquanto o sync propaga arquivos imutaveis de operacoes e checkpoints periodicos por uma pasta sincronizada
 - Evitar APIs de provedores, OAuth e infraestrutura cloud gerenciada
 - Focar o milestone atual em um workspace local-first com multiplos quadros, colunas especificas por quadro, rename inline de colunas, drag and drop de colunas, persistencia em SQLite, always-on-top e sync em pasta sincronizada

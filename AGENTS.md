@@ -37,7 +37,7 @@ Agents should stay aligned with these project-level decisions:
 - Local persistence in SQLite
 - Zustand for state management
 - Tailwind CSS for styling
-- `dnd-kit` for drag and drop
+- Renderer-managed drag and drop
 - Offline-first architecture
 - Local SQLite database as source of truth
 - User-selected synced folder as sync provider
