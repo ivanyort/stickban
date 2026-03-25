@@ -18,6 +18,7 @@ nsis:
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
+  runAfterFinish: false
 artifactName: ${productName}-${version}-${os}-${arch}.${ext}
 publish:
   - provider: github

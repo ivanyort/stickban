@@ -41,6 +41,7 @@ This document tracks the real implementation state of the repository and the hig
 - Windows release packaging simplified to NSIS installer only
 - Packaged Windows builds now use in-app update checks backed by GitHub Releases and `electron-updater`, including background download and restart-to-install flow
 - The renderer now surfaces automatic update checks more explicitly through footer status text and a visible banner when an update is available, ready to install, or has failed
+- Windows installer and in-app updater now keep automatic app relaunch disabled by default after install/update
 - Public GitHub Releases currently publish Windows artifacts only
 - Public landing page scaffold delivered under `site/`
 - GitHub Pages deployment workflow configured with repository-level fork protection

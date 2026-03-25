@@ -872,7 +872,7 @@ function App(): JSX.Element {
                 <SyncMetric label="Current version" value={updateStatus?.currentVersion ?? appVersion} />
                 <SyncMetric
                   label="Available version"
-                  value={updateStatus?.availableUpdate?.version ?? updateStatus?.downloadedUpdate?.version ?? 'None'}
+                  value={getAvailableVersionLabel(updateStatus)}
                 />
                 <SyncMetric
                   label="Last check"
@@ -1062,6 +1062,34 @@ function getUpdateBanner(
   }
 
   return null
+}
+
+function getAvailableVersionLabel(status: UpdateStatus | null): string {
+  if (!status?.supported) {
+    return 'Unavailable'
+  }
+
+  if (status.downloadedUpdate?.version) {
+    return status.downloadedUpdate.version
+  }
+
+  if (status.availableUpdate?.version) {
+    return status.availableUpdate.version
+  }
+
+  if (status.phase === 'up-to-date') {
+    return 'Up to date'
+  }
+
+  if (status.phase === 'checking' || status.phase === 'idle') {
+    return 'Checking...'
+  }
+
+  if (status.phase === 'error') {
+    return 'Unknown'
+  }
+
+  return 'Not checked yet'
 }
 
 function SyncMetric({ label, value }: { label: string; value: string }): JSX.Element {

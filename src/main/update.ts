@@ -56,7 +56,7 @@ export class UpdateManager {
     this.initialized = true
     autoUpdater.autoDownload = true
     autoUpdater.autoInstallOnAppQuit = false
-    autoUpdater.autoRunAppAfterInstall = true
+    autoUpdater.autoRunAppAfterInstall = false
 
     autoUpdater.on('checking-for-update', () => {
       this.status.phase = 'checking'
@@ -171,7 +171,7 @@ export class UpdateManager {
     }
 
     setImmediate(() => {
-      autoUpdater.quitAndInstall(false, true)
+      autoUpdater.quitAndInstall(false, false)
     })
   }
 
