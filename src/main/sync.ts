@@ -650,10 +650,15 @@ export class SyncManager {
 
     const checkpointFiles = readdirSync(info.checkpointsPath)
       .filter((entry) => entry.endsWith('.json'))
-      .sort()
+      .map((entry) => ({
+        file: entry,
+        checkpoint: safeParseJson<SyncCheckpoint>(readFileSync(join(info.checkpointsPath, entry), 'utf8'))
+      }))
+      .filter((entry): entry is { file: string; checkpoint: SyncCheckpoint } => Boolean(entry.checkpoint))
+      .sort((left, right) => compareCheckpoints(left.checkpoint, right.checkpoint))
     if (checkpointFiles.length > 6) {
-      checkpointFiles.slice(0, checkpointFiles.length - 6).forEach((file) => {
-        rmSync(join(info.checkpointsPath, file), { force: true })
+      checkpointFiles.slice(0, checkpointFiles.length - 6).forEach((entry) => {
+        rmSync(join(info.checkpointsPath, entry.file), { force: true })
       })
     }
   }
