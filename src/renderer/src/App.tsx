@@ -11,7 +11,6 @@ import {
   PinOff,
   Plus,
   RefreshCw,
-  Settings2,
   Square,
   Trash2,
   X
@@ -522,19 +521,17 @@ function App(): JSX.Element {
           className="relative z-10 flex shrink-0 items-center gap-3"
           style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
         >
-          <div className="flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-muted-foreground">
-            <SyncBadgeIcon className="h-3 w-3" />
-            <span>{syncBadgeLabel}</span>
-          </div>
-
           <Button
-            variant={showSyncPanel ? 'default' : 'ghost'}
+            variant="ghost"
             size="sm"
             onClick={() => setShowSyncPanel((current) => !current)}
-            className="gap-1.5 text-xs"
+            className={cn(
+              'rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-secondary/80',
+              showSyncPanel && 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground'
+            )}
           >
-            <Settings2 className="h-3.5 w-3.5" />
-            <span>Sync</span>
+            <SyncBadgeIcon className="h-3 w-3" />
+            <span>{syncBadgeLabel}</span>
           </Button>
 
           <Button
