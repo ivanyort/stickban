@@ -32,7 +32,7 @@ Implementation constraints for this phase:
 
 ## Phase 2
 
-Status: `planned`
+Status: `in progress`
 
 Goals and milestones:
 

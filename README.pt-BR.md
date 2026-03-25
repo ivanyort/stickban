@@ -13,7 +13,7 @@ Stickban e um aplicativo desktop de Kanban focado em velocidade, baixo atrito e 
 Este repositorio esta em fase de bootstrap. A especificacao do produto existe em [`SPEC.md`](./SPEC.md), e o primeiro scaffold executavel da aplicacao agora ja existe.
 
 A documentacao deste repositorio serve para estabelecer direcao enquanto a implementacao ainda amadurece.
-O milestone executavel atual continua local-first, mas agora tambem inclui sync em nuvem via pasta sincronizada escolhida pelo usuario. O app atual cobre multiplos quadros locais, colunas especificas por quadro, reordenacao e movimento de colunas entre quadros, persistencia em SQLite, drag and drop, always-on-top, arquivos imutaveis de operacoes de sync, checkpoints periodicos e protecoes no bootstrap inicial do sync.
+O milestone executavel atual continua local-first, mas agora tambem inclui sync em nuvem via pasta sincronizada escolhida pelo usuario. O app atual cobre multiplos quadros locais, colunas especificas por quadro, reordenacao e movimento de colunas entre quadros, persistencia em SQLite, drag and drop, always-on-top, arquivos imutaveis de operacoes de sync, checkpoints periodicos, protecoes no bootstrap inicial do sync, validacao estrutural de checkpoints e rejeicao de operacoes remotas orfas que corromperiam o workspace.
 
 ## Direcao do Produto
 
@@ -150,6 +150,7 @@ Para o roadmap detalhado, veja [`ROADMAP.md`](./ROADMAP.md).
 - Artefatos publicos de release sao gerados atualmente apenas para Windows
 - As releases de Windows sao distribuidas como instalador NSIS
 - Builds empacotadas de Windows agora verificam atualizacoes em GitHub Releases dentro do app e podem reiniciar para instalar um update baixado
+- O instalador e o updater in-app mantem desativada por padrao a reabertura automatica do app depois da instalacao/update
 - O empacotamento para Linux continua disponivel localmente, mas artefatos Linux nao sao publicados nas GitHub Releases neste momento
 - A landing page publica e publicada separadamente do pipeline de release do app desktop
 
@@ -167,7 +168,7 @@ O repositorio agora contem um scaffold executavel local-first em Electron/React/
 O estado atual do repositorio esta documentado em [`IMPLEMENTATION.md`](./IMPLEMENTATION.md).
 O modelo atual de sync funciona sem servicos pagos, APIs de provedores, OAuth ou infraestrutura cloud gerenciada. Ele depende de uma pasta ja sincronizada pelo cliente de nuvem instalado pelo usuario.
 O rodape do app exibe a versao de runtime exposta pelo Electron, pensada para coincidir com a versao injetada nas releases empacotadas pelo workflow de GitHub Actions.
-Builds empacotadas de Windows agora tambem verificam atualizacoes em GitHub Releases no startup e periodicamente durante a sessao.
+Builds empacotadas de Windows agora tambem verificam atualizacoes em GitHub Releases no startup e periodicamente durante a sessao, e o renderer deixa essas checagens mais visiveis com texto no rodape e banners de update.
 
 ## Licenca
 

@@ -1,44 +1,130 @@
-# 🧩 Stickban
+# Stickban
 
 **A sticky Kanban board that lives on your desktop.**
 
-Stickban is a lightweight desktop Kanban application designed to stay visible and accessible at all times. It combines a fast, distraction-free workflow with an offline-first architecture and optional cloud synchronization.
+Stickban is a lightweight desktop Kanban application designed to stay visible and accessible while you work. It combines an offline-first local workspace with optional cross-device synchronization through a user-selected synced folder.
 
----
+## Product Summary
 
-## 🚀 Features
+- Desktop-first Kanban workflow
+- Offline-first architecture with SQLite as the source of truth
+- Multiple persisted boards with board-specific columns
+- Fast card movement inside and across columns
+- Optional always-on-top behavior
+- Optional cloud propagation through a synced folder already managed by the user
 
-- 🧩 Kanban boards with drag-and-drop cards
-- 📌 Sticky desktop widget behavior (always-on-top optional)
-- ⚡ Fast and lightweight UX
-- 🌐 Works fully offline (offline-first)
-- 🔄 Automatic sync across devices through a user-selected synced folder
-- 🎨 Light, dark, and black themes
-- 🖥️ Frameless window with adjustable opacity
-- 🧠 Local-first data persistence (SQLite)
-- 🔁 Background sync with retry and resilience
+## Current Repository Reality
 
----
+The current runnable milestone already includes:
 
-## 🧱 Tech Stack
+- Multiple local boards
+- Board-specific columns
+- Card drag and drop
+- SQLite persistence
+- Always-on-top support
+- Synced-folder cloud sync via immutable operation files and periodic checkpoints
+- Packaged Windows update checks through GitHub Releases
+
+The following are not current implementation reality yet:
+
+- Multi-language interface
+- Theme support
+- System tray integration
+- Adjustable opacity
+- Managed provider APIs or OAuth-based sync
+
+## Tech Stack
 
 - Electron
 - React + TypeScript
-- SQLite (better-sqlite3)
-- Zustand (state management)
-- TailwindCSS
-- Renderer-managed drag and drop
+- SQLite via `better-sqlite3`
+- Zustand for renderer state
+- Tailwind CSS
+- Renderer-managed drag interactions
 
----
+## Usage
 
-## 📦 Installation
+- Launch Stickban
+- Create, edit, move, and delete cards directly in the board UI
+- Create, rename, reorder, move, and delete columns
+- Switch between multiple boards
+- Toggle always-on-top to keep the app visible
+- Work fully locally even without internet
+- If a synced folder is configured, let the background file-based sync loop propagate changes across devices
+
+## Architecture Overview
+
+Stickban follows an offline-first model:
+
+- Local SQLite database is the operational source of truth
+- Local writes succeed immediately and do not depend on sync availability
+- A synced folder is used only as a propagation layer between devices
+- Sync uses immutable operation files plus periodic checkpoints
+- Sync failures must not discard local data
+
+## Data Model
+
+Main entities:
+
+- Boards
+- Columns
+- Cards
+
+Current model guarantees:
+
+- All entities have stable IDs
+- Deletes use tombstones where sync safety matters
+- Sync metadata exists to support deterministic replay and conflict handling
+- Cards persist `createdAt` and `updatedAt`
+- Boards and columns currently persist ordering, tombstones, and sync state instead of dedicated timestamp/version columns
+
+Implementation defaults:
+
+- New entities should use UUIDs
+- Local SQLite remains authoritative
+- Sync metadata should stay explicit enough to support replay, checkpoint validation, and conflict recovery
+
+## Synchronization
+
+Current sync model:
+
+- Provider: user-managed synced folder such as OneDrive, Dropbox, Google Drive Desktop, iCloud Drive, or equivalent
+- Strategy: immutable operation log with periodic checkpoints
+- Source of truth: local SQLite on each device
+- Recovery primitive: checkpoint import plus later operation replay
+
+Current sync triggers:
+
+- App startup when a synced folder is already configured
+- Choosing a synced folder
+- Local changes after debounce
+- Filesystem changes detected in the synced folder
+- Periodic background interval
+- Manual `Sync now`
+
+Current sync safety rules:
+
+- Remote bootstrap into an already populated folder must import valid remote state before any local export is allowed
+- Invalid checkpoints are rejected instead of becoming canonical state
+- Orphan remote operations that reference missing boards or columns are skipped
+- Disconnecting a synced folder clears the trusted link so reconnecting the same path runs bootstrap again
+
+## Offline Support
+
+Stickban works fully offline:
+
+- Local reads and writes remain available without internet
+- Sync depends only on the local presence of the chosen synced folder
+- If the cloud drive client has not yet downloaded the sync files onto the current machine, Stickban cannot import them until they exist locally
+
+## Local Development
 
 ### Prerequisites
 
-- Node.js (>= 18)
-- npm or pnpm
+- Node.js 18+
+- npm
 
-### Install dependencies
+### Install
 
 ```bash
 npm install
@@ -50,149 +136,48 @@ npm install
 npm run dev
 ```
 
-### Build application
+### Build
 
 ```bash
 npm run build
 ```
 
----
+## Project Structure
 
-## 🖥️ Usage
+The repository does not yet match a fully separated final folder layout. The current app implementation lives mainly in:
 
-- Launch Stickban
-- Create or edit cards directly on the board
-- Drag cards between columns
-- Toggle always-on-top to keep it visible
-- Work normally even without internet
-- If a synced folder is configured, sync runs automatically through local file replication
+- `src/main/`
+- `src/preload/`
+- `src/renderer/`
+- `src/shared/`
 
----
+Any broader `/app/...` structure should still be treated as planned, not current repository reality.
 
-## 🧠 Architecture Overview
+## Non-functional Requirements
 
-Stickban follows an **offline-first architecture**:
+- Fast startup
+- Responsive renderer interactions
+- No UI blocking during sync or update checks
+- Local data protection against sync failures
+- Deterministic sync behavior when devices reconnect
 
-- Local SQLite database is the source of truth
-- All changes are persisted locally immediately
-- Changes are queued for background synchronization
-- A user-selected synced folder is used only as a sync layer
+## Roadmap Direction
 
----
+Current focus areas after the current milestone:
 
-## 💾 Data Model
+- Synced-folder cloud sync hardening
+- Multi-language interface support
+- System tray integration
+- Theme support
+- Richer sync conflict inspection and recovery UX
 
-Main entities:
+## Development Defaults
 
-- Boards
-- Columns
-- Cards
-
-Each entity includes:
-
-- id (UUID)
-- deletedAt when sync safety matters
-- sync metadata needed for conflict handling and replay
-
-Current implementation notes:
-
-- Cards persist `createdAt` and `updatedAt`
-- Boards and columns currently persist ordering, tombstones, and sync state instead of dedicated timestamp/version columns
-
----
-
-## 🔄 Synchronization
-
-- Provider: user-managed synced folder (OneDrive, Dropbox, Google Drive Desktop, iCloud Drive, or equivalent)
-- Strategy: immutable operation log with periodic checkpoints
-- Conflict handling: deterministic merge with tombstones and checkpoint recovery
-
-### Sync triggers:
-
-- App startup
-- Synced folder configured
-- Local changes with debounce
-- Background interval
-- Manual trigger
-
----
-
-## 📡 Offline Support
-
-Stickban works fully offline:
-
-- Create, edit, move, delete cards without internet
-- Changes are stored locally
-- Sync resumes when the configured synced folder becomes available again and the local file-based sync loop runs
-
----
-
-## 📁 Project Structure
-
-```
-/app
-  /main
-  /renderer
-  /db
-  /services
-    /sync
-    /syncFolder
-  /models
-  /store
-  /components
-  /hooks
-  /utils
-```
-
----
-
-## 🧪 Non-functional Requirements
-
-- Startup time < 2 seconds
-- Smooth drag-and-drop interactions
-- Low memory usage
-- No UI blocking during sync
-
----
-
-## 🗺️ Roadmap
-
-### MVP
-- Single board
-- 3 columns
-- Drag & drop
-- SQLite persistence
-- Always-on-top
-
-### Phase 2
-- Multiple boards
-- Synced-folder cloud sync
-- System tray
-- Themes
-
-### Future
-- Custom fields
-- Notifications
-- Advanced sync conflict resolution
-- Mobile companion app
-
----
-
-## 🧠 Development Notes
-
-- Use UUIDs for all entities
 - Prefer soft deletes for sync safety
-- Never block UI during sync
-- Never lose local data due to sync failures
+- Never block the UI during sync
+- Never lose local data because of sync failures
+- Keep sync secondary to local persistence, never the other way around
 
----
+## License
 
-## 📄 License
-
-MIT (or define later)
-
----
-
-## ✨ Vision
-
-Stickban aims to be the simplest and fastest way to manage tasks directly from your des
+MIT

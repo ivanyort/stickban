@@ -13,7 +13,7 @@ Stickban is a desktop Kanban application focused on speed, low friction, and con
 This repository is in bootstrap stage. The product specification exists in [`SPEC.md`](./SPEC.md), and the first runnable application scaffold is now in place.
 
 The documentation in this repository is intended to establish direction while implementation is still maturing.
-The current runnable milestone is still local-first, but now also includes cloud sync through a user-selected synced folder. The app currently covers multiple boards, board-specific columns, column reordering and cross-board moves, SQLite persistence, drag and drop, always-on-top behavior, immutable sync operation files, periodic sync checkpoints, and guarded first-time sync bootstrap behavior.
+The current runnable milestone is still local-first, but now also includes cloud sync through a user-selected synced folder. The app currently covers multiple boards, board-specific columns, column reordering and cross-board moves, SQLite persistence, drag and drop, always-on-top behavior, immutable sync operation files, periodic sync checkpoints, guarded first-time sync bootstrap behavior, checkpoint validation, and rejection of orphan remote operations that would corrupt workspace state.
 
 ## Product Direction
 
@@ -150,6 +150,7 @@ For the detailed roadmap, see [`ROADMAP.md`](./ROADMAP.md).
 - Public release artifacts are currently produced for Windows only
 - Windows releases are distributed as an NSIS installer
 - Packaged Windows builds now check public GitHub Releases for updates in-app and can restart to install a downloaded update
+- The installer and in-app updater keep automatic relaunch disabled by default after install/update
 - Linux packaging remains available for local builds, but Linux artifacts are not currently published in GitHub Releases
 - The public landing page is deployed separately from the desktop release pipeline
 
@@ -167,7 +168,7 @@ The repository now contains a runnable local-first Electron/React/TypeScript sca
 The current repository state is tracked in [`IMPLEMENTATION.md`](./IMPLEMENTATION.md).
 The current sync model works without paid services, provider APIs, OAuth, or managed cloud infrastructure. It depends on a folder already synchronized by the user's installed cloud drive client.
 The app footer displays the runtime application version exposed by Electron, which is intended to match the version injected into packaged releases by the GitHub Actions release workflow.
-Packaged Windows builds now also check GitHub Releases for updates on startup and periodically during the session.
+Packaged Windows builds now also check GitHub Releases for updates on startup and periodically during the session, and the renderer surfaces those checks more explicitly through footer status and update banners.
 
 ## License
 
