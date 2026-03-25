@@ -13,8 +13,7 @@ Stickban is a desktop Kanban application focused on speed, low friction, and con
 This repository is in bootstrap stage. The product specification exists in [`SPEC.md`](./SPEC.md), and the first runnable application scaffold is now in place.
 
 The documentation in this repository is intended to establish direction while implementation is still maturing.
-The current technical milestone remains local-first and does not include remote sync, OAuth, or external infrastructure.
-The current runnable milestone already covers multiple local boards, board-specific columns, column reordering and cross-board moves, SQLite persistence, drag and drop, and always-on-top behavior.
+The current runnable milestone is still local-first, but now also includes cloud sync through a user-selected synced folder. The app currently covers multiple boards, board-specific columns, column reordering and cross-board moves, SQLite persistence, drag and drop, always-on-top behavior, immutable sync operation files, and periodic sync checkpoints.
 
 ## Product Direction
 
@@ -23,7 +22,7 @@ The current runnable milestone already covers multiple local boards, board-speci
 - Fast and lightweight user experience
 - Offline-first architecture
 - Local SQLite persistence
-- Optional Google Drive synchronization
+- Optional cloud sync through a user-managed synced folder
 
 ## Planned Technology Stack
 
@@ -37,9 +36,9 @@ The current runnable milestone already covers multiple local boards, board-speci
 ## Initial Implementation Cut
 
 - Keep the local desktop stack: Electron, React + TypeScript, `better-sqlite3`, Zustand, Tailwind CSS, and `dnd-kit`
-- Exclude Google Drive sync, OAuth, and remote infrastructure from the first scaffold
-- Focus the current milestone on a fully local workspace with multiple boards, board-specific columns, inline column rename, column drag and drop, SQLite persistence, and always-on-top behavior
-- Treat sync as a later capability, not as a bootstrap requirement
+- Keep SQLite as the operational source of truth while sync propagates immutable operation files plus periodic checkpoints through a synced folder
+- Avoid provider APIs, OAuth, and managed cloud infrastructure
+- Focus the current milestone on a local-first workspace with multiple boards, board-specific columns, inline column rename, column drag and drop, SQLite persistence, always-on-top behavior, and synced-folder cloud sync
 
 ## Local Development
 
@@ -111,7 +110,7 @@ The structure below is planned, not implemented yet.
   /db
   /services
     /sync
-    /googleDrive
+    /syncFolder
   /models
   /store
   /components
@@ -123,9 +122,9 @@ The structure below is planned, not implemented yet.
 
 For the detailed roadmap, see [`ROADMAP.md`](./ROADMAP.md).
 
-- MVP: local workspace, multiple boards, customizable columns, column drag and drop, SQLite persistence, always-on-top
-- Phase 2: Google Drive sync, automatic update checks, multi-language interface, system tray, themes
-- Future: custom fields, notifications, advanced conflict resolution, mobile companion
+- Current: local workspace, multiple boards, customizable columns, column drag and drop, SQLite persistence, always-on-top, synced-folder cloud sync
+- Next: automatic update checks, multi-language interface, system tray, themes, sync hardening
+- Future: custom fields, notifications, richer conflict inspection and recovery, mobile companion
 
 ## Repository Documents
 
@@ -165,7 +164,7 @@ This repository may contain code, documentation, and project structure created o
 
 The repository now contains a runnable local-first Electron/React/TypeScript scaffold for the first milestone.
 The current repository state is tracked in [`IMPLEMENTATION.md`](./IMPLEMENTATION.md).
-The initial scaffold is expected to work without paid services, subscriptions, cloud infrastructure, or Google integration.
+The current sync model works without paid services, provider APIs, OAuth, or managed cloud infrastructure. It depends on a folder already synchronized by the user's installed cloud drive client.
 The app footer displays the runtime application version exposed by Electron, which is intended to match the version injected into packaged releases by the GitHub Actions release workflow.
 
 ## License

@@ -44,6 +44,110 @@ export interface WindowState {
   appVersion: string
 }
 
+export type SyncOperationKind =
+  | 'board.create'
+  | 'board.update'
+  | 'board.delete'
+  | 'column.create'
+  | 'column.update'
+  | 'column.delete'
+  | 'column.move'
+  | 'card.create'
+  | 'card.update'
+  | 'card.delete'
+  | 'card.move'
+
+export interface SyncVersion {
+  clock: number
+  createdAtUtc: string
+  operationId: string
+  deviceId: string
+}
+
+export interface SyncOperation {
+  operationId: string
+  deviceId: string
+  createdAtUtc: string
+  clock: number
+  baseClock: number
+  kind: SyncOperationKind
+  boardId?: string
+  columnId?: string
+  cardId?: string
+  payload: Record<string, unknown>
+}
+
+export interface SyncEntitySnapshot {
+  id: string
+  title: string
+  orderKey: number
+  deletedAt: string | null
+  syncState: string
+}
+
+export interface SyncBoardSnapshot extends SyncEntitySnapshot {}
+
+export interface SyncColumnSnapshot extends SyncEntitySnapshot {
+  boardId: string
+}
+
+export interface SyncCardSnapshot extends SyncEntitySnapshot {
+  columnId: string
+  description: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SyncWorkspaceSnapshot {
+  activeBoardId: string | null
+  boards: SyncBoardSnapshot[]
+  columns: SyncColumnSnapshot[]
+  cards: SyncCardSnapshot[]
+  appliedOperationIds: string[]
+  maxClock: number
+}
+
+export interface SyncCheckpoint {
+  checkpointId: string
+  deviceId: string
+  createdAtUtc: string
+  maxClock: number
+  workspace: SyncWorkspaceSnapshot
+}
+
+export type SyncNoticeLevel = 'info' | 'warning' | 'error'
+
+export interface SyncNotice {
+  id: string
+  level: SyncNoticeLevel
+  message: string
+  createdAtUtc: string
+}
+
+export interface SyncFolderConfig {
+  folderPath: string
+  syncRootPath: string
+  operationsPath: string
+  checkpointsPath: string
+  providerHint: string
+}
+
+export interface SyncStatus {
+  configured: boolean
+  syncing: boolean
+  folderPath: string | null
+  syncRootPath: string | null
+  providerHint: string | null
+  deviceId: string
+  pendingLocalOperations: number
+  lastSyncedAtUtc: string | null
+  lastImportedAtUtc: string | null
+  lastExportedAtUtc: string | null
+  lastCheckpointAtUtc: string | null
+  lastError: string | null
+  notices: SyncNotice[]
+}
+
 export interface CardDraft {
   title: string
   description: string
@@ -88,4 +192,10 @@ export interface StickbanApi {
   minimizeWindow: () => Promise<void>
   toggleMaximizeWindow: () => Promise<WindowState>
   closeWindow: () => Promise<void>
+  getSyncStatus: () => Promise<SyncStatus>
+  chooseSyncFolder: () => Promise<SyncStatus>
+  clearSyncFolder: () => Promise<SyncStatus>
+  syncNow: () => Promise<SyncStatus>
+  getSyncFolderInfo: () => Promise<SyncFolderConfig | null>
+  getSyncNotices: () => Promise<SyncNotice[]>
 }

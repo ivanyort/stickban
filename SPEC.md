@@ -12,7 +12,7 @@ Stickban is a lightweight desktop Kanban application designed to stay visible an
 - 📌 Sticky desktop widget behavior (always-on-top optional)
 - ⚡ Fast and lightweight UX
 - 🌐 Works fully offline (offline-first)
-- 🔄 Automatic sync across devices (Google Drive)
+- 🔄 Automatic sync across devices through a user-selected synced folder
 - 🎨 Light, dark, and black themes
 - 🖥️ Frameless window with adjustable opacity
 - 🧠 Local-first data persistence (SQLite)
@@ -76,7 +76,7 @@ Stickban follows an **offline-first architecture**:
 - Local SQLite database is the source of truth
 - All changes are persisted locally immediately
 - Changes are queued for background synchronization
-- Google Drive is used only as a sync layer
+- A user-selected synced folder is used only as a sync layer
 
 ---
 
@@ -101,9 +101,9 @@ Each entity includes:
 
 ## 🔄 Synchronization
 
-- Provider: Google Drive (AppDataFolder)
-- Strategy: Snapshot-based (MVP)
-- Conflict resolution: Last-write-wins
+- Provider: user-managed synced folder (OneDrive, Dropbox, Google Drive Desktop, iCloud Drive, or equivalent)
+- Strategy: immutable operation log with periodic checkpoints
+- Conflict handling: deterministic merge with tombstones and checkpoint recovery
 
 ### Sync triggers:
 
@@ -133,7 +133,7 @@ Stickban works fully offline:
   /db
   /services
     /sync
-    /googleDrive
+    /syncFolder
   /models
   /store
   /components
@@ -163,7 +163,7 @@ Stickban works fully offline:
 
 ### Phase 2
 - Multiple boards
-- Google Drive sync
+- Synced-folder cloud sync
 - System tray
 - Themes
 

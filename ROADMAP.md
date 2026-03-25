@@ -13,7 +13,7 @@ This document tracks planned product direction and upcoming milestones for Stick
 
 ## MVP
 
-Status: `in progress`
+Status: `done`
 
 Goals and milestones:
 
@@ -26,7 +26,7 @@ Goals and milestones:
 
 Implementation constraints for this phase:
 
-- No Google Drive sync
+- No provider API dependency
 - No OAuth
 - No external infrastructure or paid services
 
@@ -36,7 +36,7 @@ Status: `planned`
 
 Goals and milestones:
 
-- Google Drive synchronization
+- Synced-folder cloud sync hardening
 - Automatic update checks and in-app version update flow
 - Multi-language interface support
 - System tray integration
@@ -50,7 +50,7 @@ Goals and milestones:
 
 - Custom fields
 - Notifications
-- More advanced sync conflict resolution
+- Richer sync conflict inspection and recovery UX
 - Mobile companion app
 
 ## Notes
@@ -58,4 +58,4 @@ Goals and milestones:
 - This file tracks future direction and active priorities.
 - Detailed architectural choices belong in [`DECISIONS.md`](./DECISIONS.md).
 - Current repository reality and completed milestones belong in [`IMPLEMENTATION.md`](./IMPLEMENTATION.md).
-- Remote sync belongs to a later phase and is not part of the initial scaffold milestone.
+- Synced-folder cloud sync is now part of the runnable milestone.

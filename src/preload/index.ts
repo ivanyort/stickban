@@ -27,7 +27,13 @@ const api: StickbanApi = {
   setAlwaysOnTop: (value: boolean) => ipcRenderer.invoke('window:setAlwaysOnTop', value),
   minimizeWindow: () => ipcRenderer.invoke('window:minimize'),
   toggleMaximizeWindow: () => ipcRenderer.invoke('window:toggleMaximize'),
-  closeWindow: () => ipcRenderer.invoke('window:close')
+  closeWindow: () => ipcRenderer.invoke('window:close'),
+  getSyncStatus: () => ipcRenderer.invoke('sync:getStatus'),
+  chooseSyncFolder: () => ipcRenderer.invoke('sync:chooseFolder'),
+  clearSyncFolder: () => ipcRenderer.invoke('sync:clearFolder'),
+  syncNow: () => ipcRenderer.invoke('sync:runNow'),
+  getSyncFolderInfo: () => ipcRenderer.invoke('sync:getFolderInfo'),
+  getSyncNotices: () => ipcRenderer.invoke('sync:getNotices')
 }
 
 contextBridge.exposeInMainWorld('stickban', api)

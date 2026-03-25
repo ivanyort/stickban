@@ -29,11 +29,11 @@
       <main>
         <section class="hero">
           <div class="hero-copy">
-            <span class="badge">Local-first MVP</span>
+            <span class="badge">Local-first cloud sync</span>
             <h2>A sticky Kanban board that lives on your desktop.</h2>
             <p>
               Stickban is a lightweight desktop task board built for fast capture, multi-board flow,
-              board-specific columns, SQLite-backed persistence, and zero dependency on paid services or cloud infrastructure.
+              board-specific columns, SQLite-backed persistence, and cloud sync through a folder you already keep synchronized.
             </p>
             <div class="cta-row">
               <a
@@ -89,7 +89,7 @@
           </article>
           <article>
             <h3>Offline-first by design</h3>
-            <p>SQLite is the source of truth. The first milestone works fully locally, without sync, OAuth, or external services.</p>
+            <p>SQLite remains the source of truth while immutable operation files and periodic checkpoints replicate changes through a synced folder.</p>
           </article>
           <article>
             <h3>Built for the desktop</h3>
@@ -103,7 +103,7 @@
             <h2>Pragmatic technology, minimal operational cost.</h2>
             <p>
               Stickban is built around Electron, React, TypeScript, SQLite, Zustand, Tailwind CSS, and
-              <code>dnd-kit</code>. The bootstrap milestone avoids remote sync and infrastructure on purpose.
+              <code>dnd-kit</code>. The current milestone adds synced-folder cloud replication without provider APIs or OAuth.
             </p>
           </div>
           <ul class="stack-list">
@@ -130,6 +130,7 @@
                 <li>Column reordering and board-to-board moves</li>
                 <li>SQLite persistence</li>
                 <li>Always-on-top support</li>
+                <li>Synced-folder cloud sync</li>
               </ul>
             </article>
             <article>
@@ -139,8 +140,8 @@
                 <li>Multi-language interface</li>
                 <li>Theme support</li>
                 <li>System tray integration</li>
-                <li>Google Drive sync</li>
-                <li>Remote sync conflict handling</li>
+                <li>Sync hardening and recovery UX</li>
+                <li>Richer conflict inspection</li>
               </ul>
             </article>
           </div>

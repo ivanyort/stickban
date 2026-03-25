@@ -7,6 +7,9 @@ import type {
   CardRecord,
   ColumnDraft,
   ColumnMovePayload,
+  SyncFolderConfig,
+  SyncNotice,
+  SyncStatus,
   WorkspaceRecord
 } from '@shared/types'
 
@@ -21,6 +24,9 @@ interface BoardState {
   loading: boolean
   saving: boolean
   error: string | null
+  syncStatus: SyncStatus | null
+  syncFolderInfo: SyncFolderConfig | null
+  syncNotices: SyncNotice[]
   editingCard: CardRecord | null
   initialize: () => Promise<void>
   createBoard: (draft: BoardDraft) => Promise<void>
@@ -40,6 +46,11 @@ interface BoardState {
   minimizeWindow: () => Promise<void>
   toggleMaximizeWindow: () => Promise<void>
   closeWindow: () => Promise<void>
+  chooseSyncFolder: () => Promise<void>
+  clearSyncFolder: () => Promise<void>
+  syncNow: () => Promise<void>
+  refreshSyncStatus: () => Promise<void>
+  refreshWorkspace: () => Promise<void>
 }
 
 function applyWorkspace(workspace: WorkspaceRecord): Pick<BoardState, 'boards' | 'activeBoardId' | 'activeBoard'> {
@@ -61,14 +72,20 @@ export const useBoardStore = create<BoardState>((set) => ({
   loading: true,
   saving: false,
   error: null,
+  syncStatus: null,
+  syncFolderInfo: null,
+  syncNotices: [],
   editingCard: null,
   initialize: async () => {
     set({ loading: true, error: null })
 
     try {
-      const [workspace, windowState] = await Promise.all([
+      const [workspace, windowState, syncStatus, syncFolderInfo, syncNotices] = await Promise.all([
         window.stickban.getWorkspace(),
-        window.stickban.getWindowState()
+        window.stickban.getWindowState(),
+        window.stickban.getSyncStatus(),
+        window.stickban.getSyncFolderInfo(),
+        window.stickban.getSyncNotices()
       ])
 
       set({
@@ -77,6 +94,9 @@ export const useBoardStore = create<BoardState>((set) => ({
         isMaximized: windowState.isMaximized,
         platform: windowState.platform,
         appVersion: windowState.appVersion,
+        syncStatus,
+        syncFolderInfo,
+        syncNotices,
         loading: false
       })
     } catch (error) {
@@ -219,5 +239,68 @@ export const useBoardStore = create<BoardState>((set) => ({
   },
   closeWindow: async () => {
     await window.stickban.closeWindow()
+  },
+  refreshSyncStatus: async () => {
+    try {
+      const [syncStatus, syncFolderInfo, syncNotices] = await Promise.all([
+        window.stickban.getSyncStatus(),
+        window.stickban.getSyncFolderInfo(),
+        window.stickban.getSyncNotices()
+      ])
+      set({ syncStatus, syncFolderInfo, syncNotices })
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to refresh sync status' })
+    }
+  },
+  refreshWorkspace: async () => {
+    try {
+      const workspace = await window.stickban.getWorkspace()
+      set({ ...applyWorkspace(workspace) })
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to refresh workspace' })
+    }
+  },
+  chooseSyncFolder: async () => {
+    try {
+      set({ saving: true, error: null })
+      await window.stickban.chooseSyncFolder()
+      const [syncStatus, syncFolderInfo, syncNotices] = await Promise.all([
+        window.stickban.getSyncStatus(),
+        window.stickban.getSyncFolderInfo(),
+        window.stickban.getSyncNotices()
+      ])
+      set({ saving: false, syncStatus, syncFolderInfo, syncNotices })
+    } catch (error) {
+      set({ saving: false, error: error instanceof Error ? error.message : 'Failed to choose a sync folder' })
+    }
+  },
+  clearSyncFolder: async () => {
+    try {
+      set({ saving: true, error: null })
+      await window.stickban.clearSyncFolder()
+      const [syncStatus, syncFolderInfo, syncNotices] = await Promise.all([
+        window.stickban.getSyncStatus(),
+        window.stickban.getSyncFolderInfo(),
+        window.stickban.getSyncNotices()
+      ])
+      set({ saving: false, syncStatus, syncFolderInfo, syncNotices })
+    } catch (error) {
+      set({ saving: false, error: error instanceof Error ? error.message : 'Failed to clear sync folder' })
+    }
+  },
+  syncNow: async () => {
+    try {
+      set({ saving: true, error: null })
+      await window.stickban.syncNow()
+      const [workspace, syncStatus, syncFolderInfo, syncNotices] = await Promise.all([
+        window.stickban.getWorkspace(),
+        window.stickban.getSyncStatus(),
+        window.stickban.getSyncFolderInfo(),
+        window.stickban.getSyncNotices()
+      ])
+      set({ ...applyWorkspace(workspace), saving: false, syncStatus, syncFolderInfo, syncNotices })
+    } catch (error) {
+      set({ saving: false, error: error instanceof Error ? error.message : 'Failed to run sync' })
+    }
   }
 }))

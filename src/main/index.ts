@@ -17,8 +17,10 @@ import {
   updateColumn
 } from './database'
 import type { BoardDraft, CardDraft, CardMovePayload, ColumnDraft, ColumnMovePayload } from '../shared/types'
+import { SyncManager } from './sync'
 
 let mainWindow: BrowserWindow | null = null
+let syncManager: SyncManager | null = null
 
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -126,11 +128,19 @@ function registerIpc(): void {
   ipcMain.handle('window:close', () => {
     mainWindow?.close()
   })
+  ipcMain.handle('sync:getStatus', () => syncManager?.getStatus())
+  ipcMain.handle('sync:chooseFolder', () => syncManager?.chooseSyncFolder(mainWindow))
+  ipcMain.handle('sync:clearFolder', () => syncManager?.clearSyncFolder())
+  ipcMain.handle('sync:runNow', () => syncManager?.syncNow())
+  ipcMain.handle('sync:getFolderInfo', () => syncManager?.getFolderInfo())
+  ipcMain.handle('sync:getNotices', () => syncManager?.getNotices())
 }
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null)
   initializeDatabase(app.getPath('userData'))
+  syncManager = new SyncManager(app.getPath('userData'))
+  syncManager.initialize()
   registerIpc()
   mainWindow = createMainWindow()
 

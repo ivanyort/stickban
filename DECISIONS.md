@@ -176,6 +176,20 @@
   The SQLite layer, IPC, preload API, renderer store, and header navigation all become workspace-aware. Multiple boards are no longer a later roadmap item, while remote sync still remains a separate future capability.
   A camada SQLite, o IPC, a API do preload, o store do renderer e a navegacao do cabecalho passam a conhecer o workspace. Multiplos quadros deixam de ser item de roadmap posterior, enquanto o sync remoto continua sendo uma capability futura separada.
 
+## D-013: Synced Folder Cloud Sync
+
+- Date / Data: 2026-03-25
+- Status: accepted
+- Context / Contexto:
+  The repository now ships a real cloud sync implementation, and the earlier Google Drive AppDataFolder plan no longer matches the delivered architecture.
+  O repositorio agora entrega uma implementacao real de sync em nuvem, e o plano anterior de Google Drive AppDataFolder nao corresponde mais a arquitetura entregue.
+- Decision / Decisao:
+  Use a user-selected synced folder as the cloud propagation layer. Keep SQLite as the local operational source of truth, replicate immutable operation files between devices, and use periodic checkpoints only for recovery and faster bootstrap.
+  Usar uma pasta sincronizada escolhida pelo usuario como camada de propagacao em nuvem. Manter o SQLite como fonte operacional local de verdade, replicar arquivos imutaveis de operacoes entre dispositivos e usar checkpoints periodicos apenas para recuperacao e bootstrap mais rapido.
+- Consequences / Consequencias:
+  The product no longer depends on Google Drive APIs or OAuth. Sync correctness now depends on operation-log replay, tombstones, and checkpoint recovery instead of a single shared snapshot file. Public documentation must describe synced-folder cloud sync as current repository reality.
+  O produto deixa de depender de APIs do Google Drive ou OAuth. A corretude do sync agora depende de replay do log de operacoes, tombstones e recuperacao por checkpoints, em vez de um unico arquivo de snapshot compartilhado. A documentacao publica deve descrever o sync por pasta sincronizada como realidade atual do repositorio.
+
 ## Notes / Notas
 
 **EN:** Entries marked as `planned` reflect current intended direction from the specification and should be validated during implementation.  

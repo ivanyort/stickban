@@ -12,7 +12,7 @@ This document tracks the real implementation state of the repository and the hig
 - Public project documentation exists in [`README.md`](./README.md) and [`README.pt-BR.md`](./README.pt-BR.md).
 - Product specification exists in [`SPEC.md`](./SPEC.md).
 - Architecture and workflow guidance exists in [`DECISIONS.md`](./DECISIONS.md) and [`AGENTS.md`](./AGENTS.md).
-- The first implementation milestone is defined as local-only, without Google sync, OAuth, or external infrastructure.
+- The current implementation milestone is local-first and now includes synced-folder cloud sync without Google APIs, OAuth, or managed external infrastructure.
 
 ## Implemented Milestones
 
@@ -34,6 +34,7 @@ This document tracks the real implementation state of the repository and the hig
 - Columns now support inline rename on click, drag-and-drop reordering inside the active board, and moving an entire column to another board through board-tab drop targets
 - Card dragging now uses pointer-driven interaction instead of native HTML drag, with a custom ghost preview and more tolerant reordering inside and across columns in the active board
 - The renderer footer now shows the runtime app version reported by Electron so packaged builds can display the same version number used by automated releases
+- Synced-folder cloud sync now exists through immutable operation files, periodic checkpoints, local outbox handling, and a settings/status panel in the renderer
 - GitHub release/version automation configured for `main`
 - Windows release packaging simplified to NSIS installer only
 - Public GitHub Releases currently publish Windows artifacts only
@@ -43,14 +44,13 @@ This document tracks the real implementation state of the repository and the hig
 
 ## Current Implementation Focus
 
-- The current codebase implements the first local-only milestone
-- The current milestone now includes multiple boards and custom columns inside the local workspace
-- The next major step is hardening and manual validation before remote sync is introduced
-- The initial scaffold should be usable without subscriptions, paid services, or cloud dependencies
+- The current codebase implements the first local-first cloud-sync milestone
+- The current milestone includes multiple boards, custom columns, and synced-folder replication inside the local-first workspace
+- The next major step is sync hardening, recovery UX, and deeper manual validation across multiple devices
+- The current scaffold should be usable without subscriptions, paid services, provider APIs, or managed cloud dependencies
 
 ## Not Implemented Yet
 
-- Synchronization layer
 - Release workflow validation on GitHub Actions
 - DNS validation for `stickban.com`
 
@@ -59,4 +59,4 @@ This document tracks the real implementation state of the repository and the hig
 - This file records actual repository state and completed milestones.
 - Future goals and planning belong in [`ROADMAP.md`](./ROADMAP.md).
 - Architectural decisions belong in [`DECISIONS.md`](./DECISIONS.md).
-- Remote sync remains intentionally outside the first implementation milestone.
+- Remote sync is now part of the runnable milestone through a synced-folder operation log and periodic checkpoints.

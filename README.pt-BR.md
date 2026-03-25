@@ -13,8 +13,7 @@ Stickban e um aplicativo desktop de Kanban focado em velocidade, baixo atrito e 
 Este repositorio esta em fase de bootstrap. A especificacao do produto existe em [`SPEC.md`](./SPEC.md), e o primeiro scaffold executavel da aplicacao agora ja existe.
 
 A documentacao deste repositorio serve para estabelecer direcao enquanto a implementacao ainda amadurece.
-O milestone tecnico atual continua local-first e nao inclui sync remoto, OAuth ou infraestrutura externa.
-O milestone executavel atual ja cobre multiplos quadros locais, colunas especificas por quadro, reordenacao e movimento de colunas entre quadros, persistencia em SQLite, drag and drop e always-on-top.
+O milestone executavel atual continua local-first, mas agora tambem inclui sync em nuvem via pasta sincronizada escolhida pelo usuario. O app atual cobre multiplos quadros locais, colunas especificas por quadro, reordenacao e movimento de colunas entre quadros, persistencia em SQLite, drag and drop, always-on-top, arquivos imutaveis de operacoes de sync e checkpoints periodicos.
 
 ## Direcao do Produto
 
@@ -23,7 +22,7 @@ O milestone executavel atual ja cobre multiplos quadros locais, colunas especifi
 - Experiencia leve e rapida
 - Arquitetura offline-first
 - Persistencia local em SQLite
-- Sincronizacao opcional com Google Drive
+- Sincronizacao opcional em nuvem via pasta sincronizada gerenciada pelo usuario
 
 ## Stack Planejada
 
@@ -37,9 +36,9 @@ O milestone executavel atual ja cobre multiplos quadros locais, colunas especifi
 ## Recorte Inicial de Implementacao
 
 - Manter o stack desktop local: Electron, React + TypeScript, `better-sqlite3`, Zustand, Tailwind CSS e `dnd-kit`
-- Deixar Google Drive sync, OAuth e infraestrutura remota fora do primeiro scaffold
-- Focar o milestone atual em um workspace totalmente local com multiplos quadros, colunas especificas por quadro, rename inline de colunas, drag and drop de colunas, persistencia em SQLite e always-on-top
-- Tratar sync como capability posterior, nao como requisito do bootstrap
+- Manter o SQLite como fonte operacional de verdade enquanto o sync propaga arquivos imutaveis de operacoes e checkpoints periodicos por uma pasta sincronizada
+- Evitar APIs de provedores, OAuth e infraestrutura cloud gerenciada
+- Focar o milestone atual em um workspace local-first com multiplos quadros, colunas especificas por quadro, rename inline de colunas, drag and drop de colunas, persistencia em SQLite, always-on-top e sync em pasta sincronizada
 
 ## Desenvolvimento Local
 
@@ -111,7 +110,7 @@ A estrutura abaixo esta planejada, mas ainda nao foi implementada.
   /db
   /services
     /sync
-    /googleDrive
+    /syncFolder
   /models
   /store
   /components
@@ -123,9 +122,9 @@ A estrutura abaixo esta planejada, mas ainda nao foi implementada.
 
 Para o roadmap detalhado, veja [`ROADMAP.md`](./ROADMAP.md).
 
-- MVP: workspace local, multiplos quadros, colunas customizaveis, drag and drop de colunas, persistencia em SQLite, always-on-top
-- Fase 2: sync com Google Drive, verificacao automatica de atualizacoes, interface multi idiomas, system tray, temas
-- Futuro: campos customizados, notificacoes, resolucao avancada de conflitos, app mobile complementar
+- Atual: workspace local, multiplos quadros, colunas customizaveis, drag and drop de colunas, persistencia em SQLite, always-on-top e sync em pasta sincronizada
+- Proxima fase: verificacao automatica de atualizacoes, interface multi idiomas, system tray, temas e hardening do sync
+- Futuro: campos customizados, notificacoes, inspecao mais rica de conflitos e recuperacao, app mobile complementar
 
 ## Documentos do Repositorio
 
@@ -165,7 +164,7 @@ Este repositorio pode conter codigo, documentacao e estrutura de projeto criados
 
 O repositorio agora contem um scaffold executavel local-first em Electron/React/TypeScript para o primeiro milestone.
 O estado atual do repositorio esta documentado em [`IMPLEMENTATION.md`](./IMPLEMENTATION.md).
-Espera-se que o scaffold inicial funcione sem servicos pagos, assinaturas, infraestrutura cloud ou integracao com Google.
+O modelo atual de sync funciona sem servicos pagos, APIs de provedores, OAuth ou infraestrutura cloud gerenciada. Ele depende de uma pasta ja sincronizada pelo cliente de nuvem instalado pelo usuario.
 O rodape do app exibe a versao de runtime exposta pelo Electron, pensada para coincidir com a versao injetada nas releases empacotadas pelo workflow de GitHub Actions.
 
 ## Licenca

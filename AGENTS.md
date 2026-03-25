@@ -40,9 +40,9 @@ Agents should stay aligned with these project-level decisions:
 - `dnd-kit` for drag and drop
 - Offline-first architecture
 - Local SQLite database as source of truth
-- Google Drive AppDataFolder as sync provider
-- Snapshot-based sync when remote sync is introduced
-- Last-write-wins conflict resolution when remote sync is introduced
+- User-selected synced folder as sync provider
+- Immutable operation-log sync with periodic checkpoints
+- Tombstones and deterministic merge rules for remote conflict handling
 - AI-assisted development by default, with manual edits allowed when appropriate
 - Initial scaffold must remain local-first and exclude Google sync, OAuth, and external infrastructure
 - Public landing page deployment must stay separate from the desktop release pipeline
@@ -59,10 +59,10 @@ Agents should stay aligned with these project-level decisions:
    Do not redesign persistence around remote-first assumptions.
 
 4. Do not introduce sync behavior that contradicts the documented remote sync direction.
-   If a change would alter snapshot sync or last-write-wins semantics, record it in [`DECISIONS.md`](./DECISIONS.md) as part of the same work.
+   If a change would alter the synced-folder provider model, operation-log strategy, checkpoint role, or conflict semantics, record it in [`DECISIONS.md`](./DECISIONS.md) as part of the same work.
 
-5. Keep the initial implementation scope intentionally narrow.
-   Do not add Google Drive sync, OAuth, remote APIs, paid services, or cloud dependencies to the first scaffold unless the documented project direction changes.
+5. Keep the implementation scope intentionally narrow.
+   Do not add provider APIs, OAuth, paid services, or managed cloud dependencies unless the documented project direction changes.
 
 6. Keep the public landing page pipeline independent.
    Changes to the public site must not break or replace the desktop app release workflow, and automatic Pages deployment must remain restricted to the official repository.
@@ -115,7 +115,7 @@ Unless the repository later defines a different rule:
 - Protect local data from remote sync failures
 - Keep naming and module boundaries consistent with the planned app/main/renderer split
 - Assume AI-assisted implementation is the preferred delivery path unless the user explicitly requests otherwise
-- Assume the first working milestone must run fully locally without Google integration
+- Assume the current sync milestone must run without provider APIs or OAuth
 
 ## Git Workflow Policy / Politica de Workflow Git
 
