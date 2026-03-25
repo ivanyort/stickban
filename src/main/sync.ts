@@ -347,8 +347,10 @@ export class SyncManager {
       const exportedCount = this.flushOutbox(info)
       const importedCount = this.importRemoteOperations(info)
       const shouldCheckpoint = this.localOpsSinceCheckpoint >= CHECKPOINT_INTERVAL || importedCheckpoint || importedCount > 0
+      let syncActivityHappened = importedCheckpoint || exportedCount > 0 || importedCount > 0
       if (shouldCheckpoint) {
         this.writeCheckpoint(info)
+        syncActivityHappened = true
       }
 
       if (exportedCount > 0) {
@@ -363,7 +365,12 @@ export class SyncManager {
         linkedSyncRootPath: info.syncRootPath
       })
       this.pendingRemoteBootstrap = null
-      this.status = { ...this.status, syncing: false, lastSyncedAtUtc: now(), lastError: null }
+      this.status = {
+        ...this.status,
+        syncing: false,
+        lastSyncedAtUtc: syncActivityHappened ? now() : this.status.lastSyncedAtUtc,
+        lastError: null
+      }
       this.status = { ...this.status, bootstrapConflict: null }
       this.refreshPendingLocalOperations()
       return this.getStatus()

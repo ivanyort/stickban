@@ -270,6 +270,7 @@ function App(): JSX.Element {
     : 'Local only'
   const syncBadgeIcon = syncStatus?.configured ? Cloud : CloudOff
   const SyncBadgeIcon = syncBadgeIcon
+  const lastSyncRelative = syncStatus?.lastSyncedAtUtc ? formatSyncRelative(syncStatus.lastSyncedAtUtc) : null
   const footerStatus = saving
     ? 'Saving changes locally'
     : !syncStatus?.configured
@@ -278,7 +279,7 @@ function App(): JSX.Element {
         ? 'Saved locally • Syncing cloud changes'
         : syncStatus.pendingLocalOperations > 0
           ? 'Saved locally • Sync pending'
-          : 'Saved locally • Cloud sync up to date'
+          : `Saved locally • Cloud sync up to date${lastSyncRelative ? ` • ${lastSyncRelative}` : ''}`
   const footerStatusDotClass = saving
     ? 'bg-amber-500'
     : syncStatus?.configured && (syncStatus.syncing || syncStatus.pendingLocalOperations > 0)
@@ -696,11 +697,11 @@ function App(): JSX.Element {
               />
               <SyncMetric
                 label="Last sync"
-                value={syncStatus?.lastSyncedAtUtc ? formatSyncDate(syncStatus.lastSyncedAtUtc) : 'Not yet'}
+                value={syncStatus?.lastSyncedAtUtc ? formatSyncMoment(syncStatus.lastSyncedAtUtc) : 'Not yet'}
               />
               <SyncMetric
                 label="Last checkpoint"
-                value={syncStatus?.lastCheckpointAtUtc ? formatSyncDate(syncStatus.lastCheckpointAtUtc) : 'Not yet'}
+                value={syncStatus?.lastCheckpointAtUtc ? formatSyncMoment(syncStatus.lastCheckpointAtUtc) : 'Not yet'}
               />
             </div>
 
@@ -825,6 +826,42 @@ function App(): JSX.Element {
 
 function formatSyncDate(value: string): string {
   return new Date(value).toLocaleString()
+}
+
+function formatSyncRelative(value: string): string {
+  const deltaMs = Date.now() - new Date(value).getTime()
+  if (deltaMs < 0) {
+    return 'just now'
+  }
+
+  const seconds = Math.floor(deltaMs / 1000)
+  if (seconds < 10) {
+    return 'just now'
+  }
+  if (seconds < 60) {
+    return `${seconds}s ago`
+  }
+
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) {
+    return `${minutes} min ago`
+  }
+
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) {
+    return `${hours} h ago`
+  }
+
+  const days = Math.floor(hours / 24)
+  if (days < 7) {
+    return `${days} d ago`
+  }
+
+  return formatSyncDate(value)
+}
+
+function formatSyncMoment(value: string): string {
+  return `${formatSyncRelative(value)} • ${formatSyncDate(value)}`
 }
 
 function SyncMetric({ label, value }: { label: string; value: string }): JSX.Element {
