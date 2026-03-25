@@ -269,6 +269,20 @@ function App(): JSX.Element {
     : 'Local only'
   const syncBadgeIcon = syncStatus?.configured ? Cloud : CloudOff
   const SyncBadgeIcon = syncBadgeIcon
+  const footerStatus = saving
+    ? 'Saving changes locally'
+    : !syncStatus?.configured
+      ? 'All changes saved locally'
+      : syncStatus.syncing
+        ? 'Saved locally • Syncing cloud changes'
+        : syncStatus.pendingLocalOperations > 0
+          ? 'Saved locally • Sync pending'
+          : 'Saved locally • Cloud sync up to date'
+  const footerStatusDotClass = saving
+    ? 'bg-amber-500'
+    : syncStatus?.configured && (syncStatus.syncing || syncStatus.pendingLocalOperations > 0)
+      ? 'bg-sky-500'
+      : 'bg-emerald-500'
 
   const startBoardRename = (board: BoardSummary): void => {
     setEditingBoardId(board.id)
@@ -766,8 +780,8 @@ function App(): JSX.Element {
           <span>Version {appVersion}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className={cn('h-1.5 w-1.5 rounded-full', saving ? 'bg-amber-500' : 'bg-emerald-500')} />
-          <span>{saving ? 'Saving changes locally' : 'All changes saved locally'}</span>
+          <div className={cn('h-1.5 w-1.5 rounded-full', footerStatusDotClass)} />
+          <span>{footerStatus}</span>
         </div>
       </footer>
 
