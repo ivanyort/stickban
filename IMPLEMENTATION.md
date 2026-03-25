@@ -12,6 +12,7 @@ This document tracks the real implementation state of the repository and the hig
 - Public project documentation exists in [`README.md`](./README.md) and [`README.pt-BR.md`](./README.pt-BR.md).
 - Product specification exists in [`SPEC.md`](./SPEC.md).
 - Architecture and workflow guidance exists in [`DECISIONS.md`](./DECISIONS.md) and [`AGENTS.md`](./AGENTS.md).
+- A root-level convenience script now exists for fast-forwarding the local `main` branch from the remote repository when the working tree is clean.
 - The current implementation milestone is local-first and now includes synced-folder cloud sync without Google APIs, OAuth, or managed external infrastructure.
 
 ## Implemented Milestones

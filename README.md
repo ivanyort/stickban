@@ -75,6 +75,20 @@ To launch the built app as `root`:
 npm run start:root
 ```
 
+Repository update convenience script:
+
+```bash
+./update-local-main.sh
+```
+
+Optional arguments:
+
+```bash
+./update-local-main.sh origin main
+```
+
+The script fetches the remote and performs a fast-forward-only update, but it refuses to run if the working tree is dirty.
+
 ## Local Data Path
 
 Stickban persists its local SQLite database at:

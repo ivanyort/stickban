@@ -75,6 +75,20 @@ Para abrir o app buildado como `root`:
 npm run start:root
 ```
 
+Script de conveniencia para atualizar o repositorio local:
+
+```bash
+./update-local-main.sh
+```
+
+Argumentos opcionais:
+
+```bash
+./update-local-main.sh origin main
+```
+
+O script faz fetch do remoto e atualiza com fast-forward only, mas se recusa a rodar quando o working tree esta sujo.
+
 ## Localizacao dos Dados Locais
 
 O Stickban persiste seu banco SQLite local em:

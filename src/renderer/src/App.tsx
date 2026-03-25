@@ -107,7 +107,6 @@ function App(): JSX.Element {
     position: 'left' | 'right'
   } | null>(null)
   const [dragOverBoardId, setDragOverBoardId] = useState<string | null>(null)
-  const cardListRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   useEffect(() => {
     void initialize()
@@ -691,9 +690,6 @@ function App(): JSX.Element {
               }
             }}
             draggedTaskColumnId={draggedTask?.columnId ?? null}
-            onTaskListRef={(node) => {
-              cardListRefs.current[column.id] = node
-            }}
             onTaskPointerDown={handleTaskPointerDown}
             onEditCard={setEditingCard}
             onRenameColumn={(columnId, draft) => void updateColumn(columnId, { title: draft })}
@@ -1232,7 +1228,6 @@ function BoardColumn({
   onColumnDrop,
   onDeleteCard,
   onDeleteColumn,
-  onTaskListRef,
   onTaskPointerDown,
   onEditCard,
   onRenameColumn
@@ -1255,7 +1250,6 @@ function BoardColumn({
   onColumnDrop: (event: React.DragEvent, targetColumnId: string, targetBoardId: string) => void
   onDeleteCard: (cardId: string) => void
   onDeleteColumn: (column: ColumnRecord) => void
-  onTaskListRef: (node: HTMLDivElement | null) => void
   onTaskPointerDown: (event: React.PointerEvent<HTMLDivElement>, taskId: string, columnId: string) => void
   onEditCard: (card: CardRecord) => void
   onRenameColumn: (columnId: string, title: string) => void
@@ -1420,7 +1414,6 @@ function BoardColumn({
       </div>
 
       <div
-        ref={onTaskListRef}
         data-card-list-column-id={column.id}
         className="flex flex-1 flex-col gap-2 overflow-y-auto"
       >
