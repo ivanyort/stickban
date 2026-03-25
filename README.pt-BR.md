@@ -51,6 +51,7 @@ Comandos:
 
 ```bash
 npm install
+npm test
 npm run dev
 npm run site:build
 ```
@@ -167,6 +168,7 @@ Este repositorio pode conter codigo, documentacao e estrutura de projeto criados
 O repositorio agora contem um scaffold executavel local-first em Electron/React/TypeScript para o primeiro milestone.
 O estado atual do repositorio esta documentado em [`IMPLEMENTATION.md`](./IMPLEMENTATION.md).
 O modelo atual de sync funciona sem servicos pagos, APIs de provedores, OAuth ou infraestrutura cloud gerenciada. Ele depende de uma pasta ja sincronizada pelo cliente de nuvem instalado pelo usuario.
+O repositorio agora tambem inclui uma suite automatizada de regressao focada em bootstrap do sync, operacoes remotas adiadas, backups de recovery, flush no encerramento e refresh imediato do workspace apos a escolha da pasta sincronizada.
 O rodape do app exibe a versao de runtime exposta pelo Electron, pensada para coincidir com a versao injetada nas releases empacotadas pelo workflow de GitHub Actions.
 Builds empacotadas de Windows agora tambem verificam atualizacoes em GitHub Releases no startup e periodicamente durante a sessao, e o renderer deixa essas checagens mais visiveis com texto no rodape e banners de update.
 

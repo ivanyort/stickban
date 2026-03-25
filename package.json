@@ -11,6 +11,7 @@
     "dev:root": "npm run build && electron --no-sandbox out/main/index.js",
     "start": "electron-vite preview",
     "start:root": "electron --no-sandbox out/main/index.js",
+    "test": "electron --no-sandbox --run-as-node ./scripts/tests/run-vitest.mjs run",
     "site:dev": "vite --config site/vite.config.ts",
     "site:build": "vite build --config site/vite.config.ts",
     "typecheck": "tsc --noEmit",
@@ -53,6 +54,7 @@
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.3",
-    "vite": "^4.5.9"
+    "vite": "^4.5.9",
+    "vitest": "^1.6.0"
   }
 }

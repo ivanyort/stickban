@@ -51,6 +51,7 @@ Commands:
 
 ```bash
 npm install
+npm test
 npm run dev
 npm run site:build
 ```
@@ -167,6 +168,7 @@ This repository may contain code, documentation, and project structure created o
 The repository now contains a runnable local-first Electron/React/TypeScript scaffold for the first milestone.
 The current repository state is tracked in [`IMPLEMENTATION.md`](./IMPLEMENTATION.md).
 The current sync model works without paid services, provider APIs, OAuth, or managed cloud infrastructure. It depends on a folder already synchronized by the user's installed cloud drive client.
+The repository now also includes an automated regression suite focused on sync bootstrap, deferred remote operations, recovery backups, shutdown flush behavior, and immediate workspace refresh after sync-folder selection.
 The app footer displays the runtime application version exposed by Electron, which is intended to match the version injected into packaged releases by the GitHub Actions release workflow.
 Packaged Windows builds now also check GitHub Releases for updates on startup and periodically during the session, and the renderer surfaces those checks more explicitly through footer status and update banners.
 

@@ -1309,6 +1309,11 @@ function applyCardMove(operation: SyncOperation): RemoteOperationApplyResult {
 }
 
 export function initializeDatabase(userDataPath: string): void {
+  if (db) {
+    db.close()
+    db = null
+  }
+
   const databasePath = join(userDataPath, 'data', 'stickban.db')
   mkdirSync(dirname(databasePath), { recursive: true })
 
@@ -1319,6 +1324,15 @@ export function initializeDatabase(userDataPath: string): void {
   initializeSchema()
   seedDatabase()
   getOrCreateDeviceId()
+}
+
+export function closeDatabase(): void {
+  if (db) {
+    db.close()
+    db = null
+  }
+
+  operationEmitter = null
 }
 
 export async function backupDatabase(destinationFile: string): Promise<void> {

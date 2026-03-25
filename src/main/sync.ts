@@ -90,6 +90,10 @@ function createFileWarningNotice(message: string): SyncNotice {
   }
 }
 
+function isRecursiveWatchUnsupported(error: unknown): boolean {
+  return error instanceof Error && 'code' in error && error.code === 'ERR_FEATURE_UNAVAILABLE_ON_PLATFORM'
+}
+
 interface PendingRemoteBootstrap {
   folderPath: string
   syncRootPath: string
@@ -464,8 +468,10 @@ export class SyncManager {
         return this.getStatus()
       }
 
+      let exportedInitialCheckpoint = false
       if (!remoteHasRecognizedHistory && !isCurrentRootLinked) {
         this.writeCheckpoint(info)
+        exportedInitialCheckpoint = true
         this.pushNotice({
           id: randomUUID(),
           level: 'info',
@@ -478,7 +484,7 @@ export class SyncManager {
       const exportedCount = this.flushOutbox(info)
       const importedCount = this.importRemoteOperations(remoteData.operations.map((entry) => entry.operation))
       const shouldCheckpoint = this.localOpsSinceCheckpoint >= CHECKPOINT_INTERVAL || importedCheckpoint || importedCount > 0
-      let syncActivityHappened = importedCheckpoint || exportedCount > 0 || importedCount > 0
+      let syncActivityHappened = exportedInitialCheckpoint || importedCheckpoint || exportedCount > 0 || importedCount > 0
       if (shouldCheckpoint) {
         this.writeCheckpoint(info)
         syncActivityHappened = true
@@ -761,11 +767,27 @@ export class SyncManager {
       return
     }
 
-    const watcher = watch(info.syncRootPath, { recursive: true }, () => {
+    const watchers: Array<{ close: () => void }> = []
+    const onChange = () => {
       this.scheduleSync(1200)
-    })
+    }
 
-    this.watchStop = () => watcher.close()
+    try {
+      watchers.push(
+        watch(info.syncRootPath, { recursive: true }, onChange)
+      )
+    } catch (error) {
+      if (!isRecursiveWatchUnsupported(error)) {
+        throw error
+      }
+
+      watchers.push(watch(info.operationsPath, onChange))
+      watchers.push(watch(info.checkpointsPath, onChange))
+    }
+
+    this.watchStop = () => {
+      watchers.forEach((watcher) => watcher.close())
+    }
     this.intervalTimer = setInterval(() => {
       void this.syncNow()
     }, 10_000)

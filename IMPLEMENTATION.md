@@ -39,6 +39,7 @@ This document tracks the real implementation state of the repository and the hig
 - Sync bootstrap now refuses to export local seed state into a populated remote folder before a valid remote import succeeds, and invalid checkpoints/orphan remote operations are rejected instead of contaminating the workspace
 - Out-of-order remote operations with missing dependencies are now retried in later sync passes instead of being marked as permanently consumed
 - Adopting a remote workspace now creates a local recovery backup first, and app shutdown now flushes the local sync outbox into the configured synced folder before quitting
+- An automated regression suite now covers sync bootstrap, deferred remote operations, destructive remote adoption safeguards, shutdown outbox flush behavior, and immediate workspace refresh after sync-folder selection
 - GitHub release/version automation configured for `main`
 - Windows release packaging simplified to NSIS installer only
 - Packaged Windows builds now use in-app update checks backed by GitHub Releases and `electron-updater`, including background download and restart-to-install flow
@@ -54,6 +55,7 @@ This document tracks the real implementation state of the repository and the hig
 - The current codebase implements the first local-first cloud-sync milestone
 - The current milestone includes multiple boards, custom columns, and synced-folder replication inside the local-first workspace
 - The next major step is deeper manual validation across multiple devices and a richer recovery UX on top of the hardened sync core
+- The repository now includes a dedicated `npm test` workflow for sync-risk regression coverage
 - Automatic updates are currently intended only for packaged Windows builds; development builds and non-Windows packages stay outside this flow
 - The current scaffold should be usable without subscriptions, paid services, provider APIs, or managed cloud dependencies
 
