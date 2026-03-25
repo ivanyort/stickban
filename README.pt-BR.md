@@ -13,7 +13,7 @@ Stickban e um aplicativo desktop de Kanban focado em velocidade, baixo atrito e 
 Este repositorio esta em fase de bootstrap. A especificacao do produto existe em [`SPEC.md`](./SPEC.md), e o primeiro scaffold executavel da aplicacao agora ja existe.
 
 A documentacao deste repositorio serve para estabelecer direcao enquanto a implementacao ainda amadurece.
-O milestone executavel atual continua local-first, mas agora tambem inclui sync em nuvem via pasta sincronizada escolhida pelo usuario. O app atual cobre multiplos quadros locais, colunas especificas por quadro, reordenacao e movimento de colunas entre quadros, persistencia em SQLite, drag and drop, always-on-top, arquivos imutaveis de operacoes de sync, checkpoints periodicos, protecoes no bootstrap inicial do sync, validacao estrutural de checkpoints e rejeicao de operacoes remotas orfas que corromperiam o workspace.
+O milestone executavel atual continua local-first, mas agora tambem inclui sync em nuvem via pasta sincronizada escolhida pelo usuario. O app atual cobre multiplos quadros locais, colunas especificas por quadro, reordenacao e movimento de colunas entre quadros, persistencia em SQLite, drag and drop, always-on-top, arquivos imutaveis de operacoes de sync, checkpoints periodicos, protecoes no bootstrap inicial do sync, validacao estrutural de checkpoints, reprocessamento de operacoes remotas fora de ordem com dependencias ausentes, backups locais de recovery antes de adocoes remotas destrutivas e rejeicao de operacoes remotas orfas que corromperiam o workspace.
 
 ## Direcao do Produto
 

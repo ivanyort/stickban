@@ -309,12 +309,13 @@ export const useBoardStore = create<BoardState>((set) => ({
     try {
       set({ saving: true, error: null })
       await window.stickban.chooseSyncFolder()
-      const [syncStatus, syncFolderInfo, syncNotices] = await Promise.all([
+      const [workspace, syncStatus, syncFolderInfo, syncNotices] = await Promise.all([
+        window.stickban.getWorkspace(),
         window.stickban.getSyncStatus(),
         window.stickban.getSyncFolderInfo(),
         window.stickban.getSyncNotices()
       ])
-      set({ saving: false, syncStatus, syncFolderInfo, syncNotices })
+      set({ ...applyWorkspace(workspace), saving: false, syncStatus, syncFolderInfo, syncNotices })
     } catch (error) {
       set({ saving: false, error: error instanceof Error ? error.message : 'Failed to choose a sync folder' })
     }

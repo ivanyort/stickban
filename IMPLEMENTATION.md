@@ -37,6 +37,8 @@ This document tracks the real implementation state of the repository and the hig
 - Synced-folder cloud sync now exists through immutable operation files, periodic checkpoints, local outbox handling, and a settings/status panel in the renderer
 - First-time synced-folder bootstrap now exports an initial checkpoint into an empty remote folder and blocks silent linking when a populated remote folder conflicts with unsynchronized local data
 - Sync bootstrap now refuses to export local seed state into a populated remote folder before a valid remote import succeeds, and invalid checkpoints/orphan remote operations are rejected instead of contaminating the workspace
+- Out-of-order remote operations with missing dependencies are now retried in later sync passes instead of being marked as permanently consumed
+- Adopting a remote workspace now creates a local recovery backup first, and app shutdown now flushes the local sync outbox into the configured synced folder before quitting
 - GitHub release/version automation configured for `main`
 - Windows release packaging simplified to NSIS installer only
 - Packaged Windows builds now use in-app update checks backed by GitHub Releases and `electron-updater`, including background download and restart-to-install flow
@@ -51,7 +53,7 @@ This document tracks the real implementation state of the repository and the hig
 
 - The current codebase implements the first local-first cloud-sync milestone
 - The current milestone includes multiple boards, custom columns, and synced-folder replication inside the local-first workspace
-- The next major step is sync hardening, recovery UX, and deeper manual validation across multiple devices
+- The next major step is deeper manual validation across multiple devices and a richer recovery UX on top of the hardened sync core
 - Automatic updates are currently intended only for packaged Windows builds; development builds and non-Windows packages stay outside this flow
 - The current scaffold should be usable without subscriptions, paid services, provider APIs, or managed cloud dependencies
 

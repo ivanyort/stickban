@@ -44,6 +44,13 @@ export interface WorkspaceBootstrapState {
   isPristineSeedWorkspace: boolean
 }
 
+export type RemoteOperationOutcome = 'applied' | 'noop' | 'deferred' | 'invalid'
+
+export interface RemoteOperationApplyResult {
+  outcome: RemoteOperationOutcome
+  notices: SyncNotice[]
+}
+
 let db: Database.Database | null = null
 let operationEmitter: OperationEmitter | null = null
 
@@ -62,6 +69,30 @@ function createNotice(level: SyncNotice['level'], message: string): SyncNotice {
 
 function createId(): string {
   return randomUUID()
+}
+
+function createApplyResult(outcome: RemoteOperationOutcome, notices: SyncNotice[] = []): RemoteOperationApplyResult {
+  return { outcome, notices }
+}
+
+function createInvalidOperationResult(operation: SyncOperation, reason: string): RemoteOperationApplyResult {
+  return createApplyResult('invalid', [
+    createNotice('warning', `Skipped invalid remote ${operation.kind} ${operation.operationId.slice(0, 8)} because ${reason}.`)
+  ])
+}
+
+function createDeferredOperationResult(operation: SyncOperation, reason: string): RemoteOperationApplyResult {
+  return createApplyResult('deferred', [
+    createNotice('warning', `Deferred remote ${operation.kind} ${operation.operationId.slice(0, 8)} because ${reason}.`)
+  ])
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value)
 }
 
 function getDb(): Database.Database {
@@ -247,6 +278,121 @@ function validateWorkspaceSnapshot(workspace: SyncWorkspaceSnapshot): string | n
   }
 
   return null
+}
+
+export function validateCheckpointSnapshot(checkpoint: SyncCheckpoint): string | null {
+  return validateWorkspaceSnapshot(checkpoint.workspace)
+}
+
+export function validateOperationShape(operation: SyncOperation): string | null {
+  if (!isNonEmptyString(operation.operationId)) {
+    return 'operationId is missing'
+  }
+  if (!isNonEmptyString(operation.deviceId)) {
+    return 'deviceId is missing'
+  }
+  if (!isNonEmptyString(operation.createdAtUtc)) {
+    return 'createdAtUtc is missing'
+  }
+  if (!isFiniteNumber(operation.clock)) {
+    return 'clock is invalid'
+  }
+  if (!isFiniteNumber(operation.baseClock)) {
+    return 'baseClock is invalid'
+  }
+
+  switch (operation.kind) {
+    case 'board.create':
+      if (!isNonEmptyString(operation.boardId)) {
+        return 'boardId is missing'
+      }
+      if (!isNonEmptyString(operation.payload.title)) {
+        return 'payload.title is missing'
+      }
+      if (!isFiniteNumber(operation.payload.orderKey)) {
+        return 'payload.orderKey is invalid'
+      }
+      return null
+    case 'board.update':
+      if (!isNonEmptyString(operation.boardId)) {
+        return 'boardId is missing'
+      }
+      if (!isNonEmptyString(operation.payload.title)) {
+        return 'payload.title is missing'
+      }
+      return null
+    case 'board.delete':
+      return isNonEmptyString(operation.boardId) ? null : 'boardId is missing'
+    case 'column.create':
+      if (!isNonEmptyString(operation.columnId)) {
+        return 'columnId is missing'
+      }
+      if (!isNonEmptyString(operation.boardId ?? operation.payload.boardId)) {
+        return 'boardId is missing'
+      }
+      if (!isNonEmptyString(operation.payload.title)) {
+        return 'payload.title is missing'
+      }
+      if (!isFiniteNumber(operation.payload.orderKey)) {
+        return 'payload.orderKey is invalid'
+      }
+      return null
+    case 'column.update':
+      if (!isNonEmptyString(operation.columnId)) {
+        return 'columnId is missing'
+      }
+      return isNonEmptyString(operation.payload.title) ? null : 'payload.title is missing'
+    case 'column.delete':
+      return isNonEmptyString(operation.columnId) ? null : 'columnId is missing'
+    case 'column.move':
+      if (!isNonEmptyString(operation.columnId)) {
+        return 'columnId is missing'
+      }
+      if (!isNonEmptyString(operation.boardId ?? operation.payload.boardId)) {
+        return 'boardId is missing'
+      }
+      return isFiniteNumber(operation.payload.orderKey) ? null : 'payload.orderKey is invalid'
+    case 'card.create':
+      if (!isNonEmptyString(operation.cardId)) {
+        return 'cardId is missing'
+      }
+      if (!isNonEmptyString(operation.columnId ?? operation.payload.columnId)) {
+        return 'columnId is missing'
+      }
+      if (!isNonEmptyString(operation.payload.title)) {
+        return 'payload.title is missing'
+      }
+      if (typeof operation.payload.description !== 'string') {
+        return 'payload.description is invalid'
+      }
+      if (!isNonEmptyString(operation.payload.createdAt)) {
+        return 'payload.createdAt is missing'
+      }
+      if (!isNonEmptyString(operation.payload.updatedAt)) {
+        return 'payload.updatedAt is missing'
+      }
+      return isFiniteNumber(operation.payload.orderKey) ? null : 'payload.orderKey is invalid'
+    case 'card.update':
+      if (!isNonEmptyString(operation.cardId)) {
+        return 'cardId is missing'
+      }
+      if (typeof operation.payload.title !== 'string' && typeof operation.payload.description !== 'string') {
+        return 'payload must contain title or description'
+      }
+      return null
+    case 'card.delete':
+      return isNonEmptyString(operation.cardId) ? null : 'cardId is missing'
+    case 'card.move':
+      if (!isNonEmptyString(operation.cardId)) {
+        return 'cardId is missing'
+      }
+      if (!isNonEmptyString(operation.columnId ?? operation.payload.columnId)) {
+        return 'columnId is missing'
+      }
+      return isFiniteNumber(operation.payload.orderKey) ? null : 'payload.orderKey is invalid'
+    default:
+      return 'operation kind is unsupported'
+  }
 }
 
 function sortRowsByOrder<T extends { id: string; order_key: number }>(rows: T[]): T[] {
@@ -699,7 +845,7 @@ function getCardTargetOrderKey(columnId: string, toIndex: number, excludeCardId?
   return ensureOrderKeyGap('card', columnId, before, after)
 }
 
-function applyBoardCreate(operation: SyncOperation): SyncNotice[] {
+function applyBoardCreate(operation: SyncOperation): RemoteOperationApplyResult {
   const database = getDb()
   const boardId = operation.boardId
   const title = String(operation.payload.title ?? '').trim()
@@ -708,14 +854,14 @@ function applyBoardCreate(operation: SyncOperation): SyncNotice[] {
     ? (operation.payload.defaultColumns as Array<{ id: string; title: string; orderKey: number }>)
     : buildDefaultColumnsPayload()
   if (!boardId || !title) {
-    return []
+    return createInvalidOperationResult(operation, 'required board fields are missing')
   }
 
   const existing = database
     .prepare('SELECT deleted_at, sync_state FROM boards WHERE id = ?')
     .get(boardId) as { deleted_at: string | null; sync_state: string } | undefined
   if (existing) {
-    return []
+    return createApplyResult('noop')
   }
 
   const syncState = setFieldVersion({}, 'title', versionFromOperation(operation))
@@ -730,60 +876,66 @@ function applyBoardCreate(operation: SyncOperation): SyncNotice[] {
 
   createDefaultColumns(boardId, defaultColumns)
   normalizeBoardPositions()
-  return []
+  return createApplyResult('applied')
 }
 
-function applyBoardUpdate(operation: SyncOperation): SyncNotice[] {
+function applyBoardUpdate(operation: SyncOperation): RemoteOperationApplyResult {
   const boardId = operation.boardId
   const title = String(operation.payload.title ?? '').trim()
   if (!boardId || !title) {
-    return []
+    return createInvalidOperationResult(operation, 'required board fields are missing')
   }
 
   const row = getDb()
     .prepare('SELECT title, sync_state, deleted_at FROM boards WHERE id = ?')
     .get(boardId) as { title: string; sync_state: string; deleted_at: string | null } | undefined
-  if (!row || row.deleted_at) {
-    return []
+  if (!row) {
+    return createDeferredOperationResult(operation, `board ${boardId} does not exist locally yet`)
+  }
+  if (row.deleted_at) {
+    return createApplyResult('noop')
   }
 
   const syncState = parseSyncState(row.sync_state)
   const incomingVersion = versionFromOperation(operation)
   if (compareVersions(incomingVersion, getFieldVersion(syncState, 'title')) <= 0) {
-    return []
+    return createApplyResult('noop')
   }
 
   const nextState = setFieldVersion(syncState, 'title', incomingVersion)
   getDb().prepare('UPDATE boards SET title = ?, sync_state = ? WHERE id = ?').run(title, serializeSyncState(nextState), boardId)
-  return []
+  return createApplyResult('applied')
 }
 
-function applyBoardDelete(operation: SyncOperation): SyncNotice[] {
+function applyBoardDelete(operation: SyncOperation): RemoteOperationApplyResult {
   const boardId = operation.boardId
   if (!boardId) {
-    return []
+    return createInvalidOperationResult(operation, 'boardId is missing')
   }
 
   const database = getDb()
   const board = database
     .prepare('SELECT sync_state, deleted_at FROM boards WHERE id = ?')
     .get(boardId) as { sync_state: string; deleted_at: string | null } | undefined
-  if (!board || board.deleted_at) {
-    return []
+  if (!board) {
+    return createDeferredOperationResult(operation, `board ${boardId} does not exist locally yet`)
+  }
+  if (board.deleted_at) {
+    return createApplyResult('noop')
   }
 
   const remaining = database
     .prepare('SELECT COUNT(*) AS count FROM boards WHERE deleted_at IS NULL')
     .get() as { count: number }
   if (remaining.count <= 1) {
-    return [
+    return createApplyResult('invalid', [
       {
         id: createId(),
         level: 'warning',
         message: 'Skipped a remote board delete because at least one board must remain available.',
         createdAtUtc: now()
       }
-    ]
+    ])
   }
 
   const deleteVersion = versionFromOperation(operation)
@@ -819,35 +971,33 @@ function applyBoardDelete(operation: SyncOperation): SyncNotice[] {
     setStateValue(ACTIVE_BOARD_KEY, getFallbackBoardId())
   }
 
-  return []
+  return createApplyResult('applied')
 }
 
-function applyColumnCreate(operation: SyncOperation): SyncNotice[] {
+function applyColumnCreate(operation: SyncOperation): RemoteOperationApplyResult {
   const columnId = operation.columnId
   const boardId = operation.boardId ?? String(operation.payload.boardId ?? '')
   const title = String(operation.payload.title ?? '').trim()
   const orderKey = Number(operation.payload.orderKey ?? ORDER_GAP)
   if (!columnId || !boardId || !title) {
-    return []
+    return createInvalidOperationResult(operation, 'required column fields are missing')
   }
 
   const board = getDb()
     .prepare('SELECT deleted_at FROM boards WHERE id = ?')
     .get(boardId) as { deleted_at: string | null } | undefined
-  if (!board || board.deleted_at) {
-    return [
-      createNotice(
-        'warning',
-        `Skipped remote column.create ${operation.operationId.slice(0, 8)} because board ${boardId} does not exist locally.`
-      )
-    ]
+  if (!board) {
+    return createDeferredOperationResult(operation, `board ${boardId} does not exist locally yet`)
+  }
+  if (board.deleted_at) {
+    return createApplyResult('noop')
   }
 
   const existing = getDb()
     .prepare('SELECT id FROM columns WHERE id = ?')
     .get(columnId) as { id: string } | undefined
   if (existing) {
-    return []
+    return createApplyResult('noop')
   }
 
   const syncState = setFieldVersion({}, 'title', versionFromOperation(operation))
@@ -860,46 +1010,52 @@ function applyColumnCreate(operation: SyncOperation): SyncNotice[] {
     )
     .run(columnId, boardId, title, orderKey, serializeSyncState(syncState))
   normalizeColumnPositions(boardId)
-  return []
+  return createApplyResult('applied')
 }
 
-function applyColumnUpdate(operation: SyncOperation): SyncNotice[] {
+function applyColumnUpdate(operation: SyncOperation): RemoteOperationApplyResult {
   const columnId = operation.columnId
   const title = String(operation.payload.title ?? '').trim()
   if (!columnId || !title) {
-    return []
+    return createInvalidOperationResult(operation, 'required column fields are missing')
   }
 
   const row = getDb()
     .prepare('SELECT sync_state, deleted_at FROM columns WHERE id = ?')
     .get(columnId) as { sync_state: string; deleted_at: string | null } | undefined
-  if (!row || row.deleted_at) {
-    return []
+  if (!row) {
+    return createDeferredOperationResult(operation, `column ${columnId} does not exist locally yet`)
+  }
+  if (row.deleted_at) {
+    return createApplyResult('noop')
   }
 
   const version = versionFromOperation(operation)
   const syncState = parseSyncState(row.sync_state)
   if (compareVersions(version, getFieldVersion(syncState, 'title')) <= 0) {
-    return []
+    return createApplyResult('noop')
   }
 
   const nextState = setFieldVersion(syncState, 'title', version)
   getDb().prepare('UPDATE columns SET title = ?, sync_state = ? WHERE id = ?').run(title, serializeSyncState(nextState), columnId)
-  return []
+  return createApplyResult('applied')
 }
 
-function applyColumnDelete(operation: SyncOperation): SyncNotice[] {
+function applyColumnDelete(operation: SyncOperation): RemoteOperationApplyResult {
   const columnId = operation.columnId
   if (!columnId) {
-    return []
+    return createInvalidOperationResult(operation, 'columnId is missing')
   }
 
   const database = getDb()
   const column = database
     .prepare('SELECT board_id, sync_state, deleted_at FROM columns WHERE id = ?')
     .get(columnId) as { board_id: string; sync_state: string; deleted_at: string | null } | undefined
-  if (!column || column.deleted_at) {
-    return []
+  if (!column) {
+    return createDeferredOperationResult(operation, `column ${columnId} does not exist locally yet`)
+  }
+  if (column.deleted_at) {
+    return createApplyResult('noop')
   }
 
   const deleteVersion = versionFromOperation(operation)
@@ -919,34 +1075,35 @@ function applyColumnDelete(operation: SyncOperation): SyncNotice[] {
   })
 
   normalizeColumnPositions(column.board_id)
-  return []
+  return createApplyResult('applied')
 }
 
-function applyColumnMove(operation: SyncOperation): SyncNotice[] {
+function applyColumnMove(operation: SyncOperation): RemoteOperationApplyResult {
   const columnId = operation.columnId
   const boardId = operation.boardId ?? String(operation.payload.boardId ?? '')
   const orderKey = Number(operation.payload.orderKey ?? ORDER_GAP)
   if (!columnId || !boardId) {
-    return []
+    return createInvalidOperationResult(operation, 'required column move fields are missing')
   }
 
   const targetBoard = getDb()
     .prepare('SELECT deleted_at FROM boards WHERE id = ?')
     .get(boardId) as { deleted_at: string | null } | undefined
-  if (!targetBoard || targetBoard.deleted_at) {
-    return [
-      createNotice(
-        'warning',
-        `Skipped remote column.move ${operation.operationId.slice(0, 8)} because target board ${boardId} does not exist locally.`
-      )
-    ]
+  if (!targetBoard) {
+    return createDeferredOperationResult(operation, `target board ${boardId} does not exist locally yet`)
+  }
+  if (targetBoard.deleted_at) {
+    return createApplyResult('noop')
   }
 
   const row = getDb()
     .prepare('SELECT sync_state, deleted_at, board_id FROM columns WHERE id = ?')
     .get(columnId) as { sync_state: string; deleted_at: string | null; board_id: string } | undefined
-  if (!row || row.deleted_at) {
-    return []
+  if (!row) {
+    return createDeferredOperationResult(operation, `column ${columnId} does not exist locally yet`)
+  }
+  if (row.deleted_at) {
+    return createApplyResult('noop')
   }
 
   const version = versionFromOperation(operation)
@@ -967,7 +1124,7 @@ function applyColumnMove(operation: SyncOperation): SyncNotice[] {
   }
 
   if (!changed) {
-    return []
+    return createApplyResult('noop')
   }
 
   getDb()
@@ -975,10 +1132,10 @@ function applyColumnMove(operation: SyncOperation): SyncNotice[] {
     .run(boardId, orderKey, serializeSyncState(nextState), columnId)
   normalizeColumnPositions(row.board_id)
   normalizeColumnPositions(boardId)
-  return []
+  return createApplyResult('applied')
 }
 
-function applyCardCreate(operation: SyncOperation): SyncNotice[] {
+function applyCardCreate(operation: SyncOperation): RemoteOperationApplyResult {
   const cardId = operation.cardId
   const columnId = operation.columnId ?? String(operation.payload.columnId ?? '')
   const title = String(operation.payload.title ?? '').trim()
@@ -987,26 +1144,24 @@ function applyCardCreate(operation: SyncOperation): SyncNotice[] {
   const updatedAt = String(operation.payload.updatedAt ?? operation.createdAtUtc)
   const orderKey = Number(operation.payload.orderKey ?? ORDER_GAP)
   if (!cardId || !columnId || !title) {
-    return []
+    return createInvalidOperationResult(operation, 'required card fields are missing')
   }
 
   const column = getDb()
     .prepare('SELECT deleted_at FROM columns WHERE id = ?')
     .get(columnId) as { deleted_at: string | null } | undefined
-  if (!column || column.deleted_at) {
-    return [
-      createNotice(
-        'warning',
-        `Skipped remote card.create ${operation.operationId.slice(0, 8)} because column ${columnId} does not exist locally.`
-      )
-    ]
+  if (!column) {
+    return createDeferredOperationResult(operation, `column ${columnId} does not exist locally yet`)
+  }
+  if (column.deleted_at) {
+    return createApplyResult('noop')
   }
 
   const existing = getDb()
     .prepare('SELECT id FROM cards WHERE id = ?')
     .get(cardId) as { id: string } | undefined
   if (existing) {
-    return []
+    return createApplyResult('noop')
   }
 
   const version = versionFromOperation(operation)
@@ -1021,20 +1176,23 @@ function applyCardCreate(operation: SyncOperation): SyncNotice[] {
     )
     .run(cardId, columnId, title, description, orderKey, createdAt, updatedAt, serializeSyncState(syncState))
   normalizeCardPositions(columnId)
-  return []
+  return createApplyResult('applied')
 }
 
-function applyCardUpdate(operation: SyncOperation): SyncNotice[] {
+function applyCardUpdate(operation: SyncOperation): RemoteOperationApplyResult {
   const cardId = operation.cardId
   if (!cardId) {
-    return []
+    return createInvalidOperationResult(operation, 'cardId is missing')
   }
 
   const row = getDb()
     .prepare('SELECT title, description, sync_state, deleted_at FROM cards WHERE id = ?')
     .get(cardId) as { title: string; description: string; sync_state: string; deleted_at: string | null } | undefined
-  if (!row || row.deleted_at) {
-    return []
+  if (!row) {
+    return createDeferredOperationResult(operation, `card ${cardId} does not exist locally yet`)
+  }
+  if (row.deleted_at) {
+    return createApplyResult('noop')
   }
 
   const version = versionFromOperation(operation)
@@ -1059,26 +1217,29 @@ function applyCardUpdate(operation: SyncOperation): SyncNotice[] {
   }
 
   if (!changed) {
-    return []
+    return createApplyResult('noop')
   }
 
   getDb()
     .prepare('UPDATE cards SET title = ?, description = ?, updated_at = ?, sync_state = ? WHERE id = ?')
     .run(nextTitle, nextDescription, version.createdAtUtc, serializeSyncState(nextState), cardId)
-  return []
+  return createApplyResult('applied')
 }
 
-function applyCardDelete(operation: SyncOperation): SyncNotice[] {
+function applyCardDelete(operation: SyncOperation): RemoteOperationApplyResult {
   const cardId = operation.cardId
   if (!cardId) {
-    return []
+    return createInvalidOperationResult(operation, 'cardId is missing')
   }
 
   const row = getDb()
     .prepare('SELECT column_id, sync_state, deleted_at FROM cards WHERE id = ?')
     .get(cardId) as { column_id: string; sync_state: string; deleted_at: string | null } | undefined
-  if (!row || row.deleted_at) {
-    return []
+  if (!row) {
+    return createDeferredOperationResult(operation, `card ${cardId} does not exist locally yet`)
+  }
+  if (row.deleted_at) {
+    return createApplyResult('noop')
   }
 
   const deleteVersion = versionFromOperation(operation)
@@ -1087,34 +1248,35 @@ function applyCardDelete(operation: SyncOperation): SyncNotice[] {
     .prepare('UPDATE cards SET deleted_at = ?, updated_at = ?, sync_state = ? WHERE id = ?')
     .run(deleteVersion.createdAtUtc, deleteVersion.createdAtUtc, serializeSyncState(nextState), cardId)
   normalizeCardPositions(row.column_id)
-  return []
+  return createApplyResult('applied')
 }
 
-function applyCardMove(operation: SyncOperation): SyncNotice[] {
+function applyCardMove(operation: SyncOperation): RemoteOperationApplyResult {
   const cardId = operation.cardId
   const columnId = operation.columnId ?? String(operation.payload.columnId ?? '')
   const orderKey = Number(operation.payload.orderKey ?? ORDER_GAP)
   if (!cardId || !columnId) {
-    return []
+    return createInvalidOperationResult(operation, 'required card move fields are missing')
   }
 
   const targetColumn = getDb()
     .prepare('SELECT deleted_at FROM columns WHERE id = ?')
     .get(columnId) as { deleted_at: string | null } | undefined
-  if (!targetColumn || targetColumn.deleted_at) {
-    return [
-      createNotice(
-        'warning',
-        `Skipped remote card.move ${operation.operationId.slice(0, 8)} because target column ${columnId} does not exist locally.`
-      )
-    ]
+  if (!targetColumn) {
+    return createDeferredOperationResult(operation, `target column ${columnId} does not exist locally yet`)
+  }
+  if (targetColumn.deleted_at) {
+    return createApplyResult('noop')
   }
 
   const row = getDb()
     .prepare('SELECT column_id, sync_state, deleted_at FROM cards WHERE id = ?')
     .get(cardId) as { column_id: string; sync_state: string; deleted_at: string | null } | undefined
-  if (!row || row.deleted_at) {
-    return []
+  if (!row) {
+    return createDeferredOperationResult(operation, `card ${cardId} does not exist locally yet`)
+  }
+  if (row.deleted_at) {
+    return createApplyResult('noop')
   }
 
   const version = versionFromOperation(operation)
@@ -1135,7 +1297,7 @@ function applyCardMove(operation: SyncOperation): SyncNotice[] {
   }
 
   if (!changed) {
-    return []
+    return createApplyResult('noop')
   }
 
   getDb()
@@ -1143,7 +1305,7 @@ function applyCardMove(operation: SyncOperation): SyncNotice[] {
     .run(columnId, orderKey, version.createdAtUtc, serializeSyncState(nextState), cardId)
   normalizeCardPositions(row.column_id)
   normalizeCardPositions(columnId)
-  return []
+  return createApplyResult('applied')
 }
 
 export function initializeDatabase(userDataPath: string): void {
@@ -1157,6 +1319,26 @@ export function initializeDatabase(userDataPath: string): void {
   initializeSchema()
   seedDatabase()
   getOrCreateDeviceId()
+}
+
+export async function backupDatabase(destinationFile: string): Promise<void> {
+  await getDb().backup(destinationFile)
+}
+
+export function withScratchDatabase<T>(fn: () => T): T {
+  const previousDb = db
+  const scratch = new Database(':memory:')
+  scratch.pragma('foreign_keys = OFF')
+  db = scratch
+
+  try {
+    initializeSchema()
+    getOrCreateDeviceId()
+    return fn()
+  } finally {
+    scratch.close()
+    db = previousDb
+  }
 }
 
 export function registerOperationEmitter(emitter: OperationEmitter): void {
@@ -1291,9 +1473,9 @@ export function deleteBoard(boardId: string): WorkspaceRecord {
   }
 
   const operation = buildOperation('board.delete', { boardId }, {})
-  const notices = applyBoardDelete(operation)
-  if (notices.length > 0) {
-    throw new Error(notices[0].message)
+  const result = applyBoardDelete(operation)
+  if (result.notices.length > 0) {
+    throw new Error(result.notices[0].message)
   }
   return persistLocalMutation(operation)
 }
@@ -1422,53 +1604,62 @@ export function moveCard(cardId: string, toColumnId: string, toIndex: number): W
   return persistLocalMutation(operation)
 }
 
-export function applyRemoteOperation(operation: SyncOperation): SyncNotice[] {
+export function applyRemoteOperation(operation: SyncOperation): RemoteOperationApplyResult {
   if (hasAppliedOperation(operation.operationId)) {
-    return []
+    return createApplyResult('noop')
+  }
+
+  const validationError = validateOperationShape(operation)
+  if (validationError) {
+    return createInvalidOperationResult(operation, validationError)
   }
 
   const apply = getDb().transaction(() => {
-    let notices: SyncNotice[] = []
+    observeRemoteClock(operation.clock)
+    let result: RemoteOperationApplyResult
     switch (operation.kind) {
       case 'board.create':
-        notices = applyBoardCreate(operation)
+        result = applyBoardCreate(operation)
         break
       case 'board.update':
-        notices = applyBoardUpdate(operation)
+        result = applyBoardUpdate(operation)
         break
       case 'board.delete':
-        notices = applyBoardDelete(operation)
+        result = applyBoardDelete(operation)
         break
       case 'column.create':
-        notices = applyColumnCreate(operation)
+        result = applyColumnCreate(operation)
         break
       case 'column.update':
-        notices = applyColumnUpdate(operation)
+        result = applyColumnUpdate(operation)
         break
       case 'column.delete':
-        notices = applyColumnDelete(operation)
+        result = applyColumnDelete(operation)
         break
       case 'column.move':
-        notices = applyColumnMove(operation)
+        result = applyColumnMove(operation)
         break
       case 'card.create':
-        notices = applyCardCreate(operation)
+        result = applyCardCreate(operation)
         break
       case 'card.update':
-        notices = applyCardUpdate(operation)
+        result = applyCardUpdate(operation)
         break
       case 'card.delete':
-        notices = applyCardDelete(operation)
+        result = applyCardDelete(operation)
         break
       case 'card.move':
-        notices = applyCardMove(operation)
+        result = applyCardMove(operation)
         break
       default:
-        notices = []
+        result = createInvalidOperationResult(operation, 'operation kind is unsupported')
     }
 
-    recordAppliedOperation(operation)
-    return notices
+    if (result.outcome === 'applied' || result.outcome === 'noop') {
+      recordAppliedOperation(operation)
+    }
+
+    return result
   })
 
   return apply()

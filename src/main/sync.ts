@@ -6,6 +6,7 @@ import { dialog } from 'electron'
 import type { SyncCheckpoint, SyncFolderConfig, SyncNotice, SyncOperation, SyncStatus } from '../shared/types'
 import {
   applyRemoteOperation,
+  backupDatabase,
   clearWorkspaceForRemoteBootstrap,
   exportCheckpoint,
   getAppliedOperationsCount,
@@ -13,13 +14,16 @@ import {
   getLocalClock,
   getWorkspaceBootstrapState,
   importCheckpoint,
-  isOperationApplied,
-  registerOperationEmitter
+  registerOperationEmitter,
+  validateCheckpointSnapshot,
+  validateOperationShape,
+  withScratchDatabase
 } from './database'
 
 interface SyncConfigFile {
   folderPath: string | null
   linkedSyncRootPath?: string | null
+  hasCompletedSync?: boolean
 }
 
 const SYNC_FOLDER_NAME = 'stickban-sync'
@@ -77,9 +81,13 @@ function compareCheckpoints(left: SyncCheckpoint, right: SyncCheckpoint): number
   return left.checkpointId.localeCompare(right.checkpointId)
 }
 
-interface RemoteStateSummary {
-  operationCount: number
-  checkpointCount: number
+function createFileWarningNotice(message: string): SyncNotice {
+  return {
+    id: randomUUID(),
+    level: 'warning',
+    message,
+    createdAtUtc: now()
+  }
 }
 
 interface PendingRemoteBootstrap {
@@ -88,9 +96,35 @@ interface PendingRemoteBootstrap {
   providerHint: string
 }
 
+interface ParsedRemoteOperationFile {
+  fileName: string
+  operation: SyncOperation
+}
+
+interface ParsedRemoteCheckpointFile {
+  fileName: string
+  checkpoint: SyncCheckpoint
+}
+
+interface LoadedRemoteData {
+  operations: ParsedRemoteOperationFile[]
+  checkpoints: ParsedRemoteCheckpointFile[]
+}
+
+interface RemoteBootstrapPlan {
+  checkpoint: SyncCheckpoint | null
+  operations: SyncOperation[]
+  hasWorkspaceData: boolean
+}
+
+interface ApplyFolderPathOptions {
+  hasCompletedSync?: boolean
+}
+
 export class SyncManager {
   private readonly configPath: string
   private readonly outboxPath: string
+  private readonly recoveryPath: string
   private readonly syncStatePath: string
   private status: SyncStatus
   private syncTimer: NodeJS.Timeout | null = null
@@ -99,16 +133,19 @@ export class SyncManager {
   private inFlightSync: Promise<SyncStatus> | null = null
   private localOpsSinceCheckpoint = 0
   private pendingRemoteBootstrap: PendingRemoteBootstrap | null = null
+  private readonly sessionNoticeKeys = new Set<string>()
 
   constructor(private readonly userDataPath: string) {
     const localSyncDir = join(userDataPath, 'sync')
     this.configPath = join(localSyncDir, 'config.json')
     this.outboxPath = join(localSyncDir, 'outbox')
+    this.recoveryPath = join(localSyncDir, 'recovery')
     this.syncStatePath = localSyncDir
     mkdirSync(this.outboxPath, { recursive: true })
     this.status = {
       configured: false,
       syncing: false,
+      hasCompletedSync: false,
       folderPath: null,
       syncRootPath: null,
       providerHint: null,
@@ -139,7 +176,7 @@ export class SyncManager {
 
     const config = this.readConfig()
     if (config.folderPath) {
-      this.applyFolderPath(config.folderPath)
+      this.applyFolderPath(config.folderPath, { hasCompletedSync: Boolean(config.hasCompletedSync) })
       this.scheduleSync(1000)
     } else {
       this.refreshPendingLocalOperations()
@@ -158,14 +195,14 @@ export class SyncManager {
       return this.getStatus()
     }
 
-    this.applyFolderPath(result.filePaths[0])
+    this.applyFolderPath(result.filePaths[0], { hasCompletedSync: false })
     const syncStatus = await this.syncNow()
     if (!syncStatus.lastError || syncStatus.bootstrapConflict) {
       return syncStatus
     }
 
     if (previousConfig.folderPath) {
-      this.applyFolderPath(previousConfig.folderPath)
+      this.applyFolderPath(previousConfig.folderPath, { hasCompletedSync: Boolean(previousConfig.hasCompletedSync) })
       this.status = {
         ...this.status,
         lastError: syncStatus.lastError,
@@ -176,6 +213,7 @@ export class SyncManager {
       this.status = {
         ...syncStatus,
         configured: false,
+        hasCompletedSync: false,
         folderPath: null,
         syncRootPath: null,
         providerHint: null
@@ -187,14 +225,17 @@ export class SyncManager {
 
   clearSyncFolder(): SyncStatus {
     this.stopWatching()
+    this.sessionNoticeKeys.clear()
     this.pendingRemoteBootstrap = null
     this.writeConfig({
       folderPath: null,
-      linkedSyncRootPath: null
+      linkedSyncRootPath: null,
+      hasCompletedSync: false
     })
     this.status = {
       ...this.status,
       configured: false,
+      hasCompletedSync: false,
       folderPath: null,
       syncRootPath: null,
       providerHint: null,
@@ -266,20 +307,86 @@ export class SyncManager {
     }
 
     const pending = this.pendingRemoteBootstrap
-    clearWorkspaceForRemoteBootstrap()
-    this.clearOutbox()
-    this.applyFolderPath(pending.folderPath)
-    this.writeConfig({
-      folderPath: pending.folderPath,
-      linkedSyncRootPath: pending.syncRootPath
-    })
-    this.pendingRemoteBootstrap = null
-    this.status = {
-      ...this.status,
-      lastError: null,
-      bootstrapConflict: null
+    const info = this.buildFolderInfoFromPending(pending)
+    this.ensureRemoteDirs(info)
+    const remoteData = this.loadRemoteData(info)
+    const remotePlan = this.buildRemoteBootstrapPlan(remoteData)
+
+    if (!remotePlan || !remotePlan.hasWorkspaceData) {
+      this.status = {
+        ...this.status,
+        lastError:
+          'Stickban could not validate the remote workspace before replacing the current local data on this machine.'
+      }
+      return this.getStatus()
     }
-    return this.syncNow()
+
+    try {
+      await this.createRecoveryBackup('adopt-remote-workspace', info)
+      this.clearOutbox()
+      this.applyFolderPath(pending.folderPath, { hasCompletedSync: false })
+      const importSummary = this.applyBootstrapPlan(remotePlan)
+      const syncMoment = now()
+
+      this.writeConfig({
+        folderPath: pending.folderPath,
+        linkedSyncRootPath: pending.syncRootPath,
+        hasCompletedSync: true
+      })
+      this.pendingRemoteBootstrap = null
+      this.status = {
+        ...this.status,
+        syncing: false,
+        hasCompletedSync: true,
+        lastSyncedAtUtc: syncMoment,
+        lastImportedAtUtc: importSummary.importedCheckpoint || importSummary.importedCount > 0 ? syncMoment : null,
+        lastError: null,
+        bootstrapConflict: null
+      }
+      this.refreshPendingLocalOperations()
+      return this.getStatus()
+    } catch (error) {
+      this.setError(error instanceof Error ? error.message : 'Failed to adopt the remote workspace.')
+      return this.getStatus()
+    }
+  }
+
+  flushPendingLocalOperationsToRemote(): void {
+    const info = this.getFolderInfo()
+    if (!info) {
+      return
+    }
+
+    try {
+      this.ensureRemoteDirs(info)
+      const exportedCount = this.flushOutbox(info)
+      if (exportedCount > 0) {
+        const syncMoment = now()
+        this.status = {
+          ...this.status,
+          hasCompletedSync: true,
+          lastExportedAtUtc: syncMoment,
+          lastSyncedAtUtc: syncMoment,
+          lastError: null
+        }
+        this.writeConfig({
+          folderPath: this.status.folderPath,
+          linkedSyncRootPath: info.syncRootPath,
+          hasCompletedSync: true
+        })
+      }
+    } catch (error) {
+      this.setError(error instanceof Error ? error.message : 'Failed to flush local sync operations before shutdown.')
+    }
+  }
+
+  dispose(): void {
+    if (this.syncTimer) {
+      clearTimeout(this.syncTimer)
+      this.syncTimer = null
+    }
+
+    this.stopWatching()
   }
 
   private async performSync(): Promise<SyncStatus> {
@@ -294,97 +401,82 @@ export class SyncManager {
 
       this.ensureRemoteDirs(info)
       const persistedConfig = this.readConfig()
-      const remoteState = this.scanRemoteState(info)
+      const remoteData = this.loadRemoteData(info)
       const localState = getWorkspaceBootstrapState()
       const isCurrentRootLinked = persistedConfig.linkedSyncRootPath === info.syncRootPath
-      const requiresRemoteBootstrap =
-        !isCurrentRootLinked && remoteState.operationCount + remoteState.checkpointCount > 0 && localState.isPristineSeedWorkspace
+      const remoteHasRecognizedHistory = remoteData.operations.length + remoteData.checkpoints.length > 0
+      const remoteBootstrapPlan =
+        !isCurrentRootLinked && remoteHasRecognizedHistory ? this.buildRemoteBootstrapPlan(remoteData) : null
 
-      if (requiresRemoteBootstrap) {
-        const importedCheckpoint = this.importNewestCheckpoint(info)
-        const importedCount = this.importRemoteOperations(info)
-        const postBootstrapState = getWorkspaceBootstrapState()
-        const bootstrapSucceeded =
-          importedCheckpoint || importedCount > 0 || (postBootstrapState.boardCount > 0 && !postBootstrapState.isPristineSeedWorkspace)
-
-        if (!bootstrapSucceeded) {
-          throw new Error(
-            'Remote workspace bootstrap failed before local export. Stickban refused to write local state into a populated sync folder.'
-          )
-        }
-
-        if (importedCount > 0 || importedCheckpoint) {
-          this.status = { ...this.status, lastImportedAtUtc: now() }
-        }
-
-        this.writeConfig({
-          folderPath: this.status.folderPath,
-          linkedSyncRootPath: info.syncRootPath
-        })
-        this.pendingRemoteBootstrap = null
-        this.status = {
-          ...this.status,
-          syncing: false,
-          lastSyncedAtUtc: now(),
-          lastError: null,
-          bootstrapConflict: null
-        }
-        this.refreshPendingLocalOperations()
-        return this.getStatus()
+      if (!isCurrentRootLinked && remoteHasRecognizedHistory && !remoteBootstrapPlan) {
+        throw new Error(
+          'Stickban found remote sync files, but could not validate a usable remote workspace candidate from them. The local workspace was left untouched.'
+        )
       }
 
-      if (remoteState.operationCount === 0 && remoteState.checkpointCount === 0) {
-        if (!isCurrentRootLinked) {
-          this.writeCheckpoint(info)
-          this.pushNotice({
-            id: randomUUID(),
-            level: 'info',
-            message: 'Exported an initial cloud checkpoint from the current local workspace.',
-            createdAtUtc: now()
-          })
-        }
-      } else if (!isCurrentRootLinked) {
+      if (!isCurrentRootLinked && remoteBootstrapPlan?.hasWorkspaceData) {
         if (localState.isPristineSeedWorkspace) {
-          if (remoteState.checkpointCount === 0 && remoteState.operationCount > 0) {
-            clearWorkspaceForRemoteBootstrap()
-            this.pushNotice({
-              id: randomUUID(),
-              level: 'info',
-              message: 'Cleared the local seed workspace before importing remote operation history.',
-              createdAtUtc: now()
-            })
-          }
-        } else {
-          this.pendingRemoteBootstrap = {
-            folderPath: info.folderPath,
-            syncRootPath: info.syncRootPath,
-            providerHint: info.providerHint
-          }
-          this.stopWatching()
+          const importSummary = this.applyBootstrapPlan(remoteBootstrapPlan)
+          const syncMoment = now()
+
+          this.writeConfig({
+            folderPath: this.status.folderPath,
+            linkedSyncRootPath: info.syncRootPath,
+            hasCompletedSync: true
+          })
+          this.pendingRemoteBootstrap = null
           this.status = {
             ...this.status,
             syncing: false,
-            configured: false,
-            folderPath: null,
-            syncRootPath: null,
-            providerHint: null,
-            lastError:
-              'This sync folder already contains another Stickban workspace, and this device also has local data that has never been linked.',
-            bootstrapConflict: {
-              folderPath: info.folderPath,
-              syncRootPath: info.syncRootPath,
-              providerHint: info.providerHint,
-              reason:
-                'Use the remote workspace only if you want to discard the current local data on this machine.'
-            }
+            hasCompletedSync: true,
+            lastSyncedAtUtc: syncMoment,
+            lastImportedAtUtc: importSummary.importedCheckpoint || importSummary.importedCount > 0 ? syncMoment : null,
+            lastError: null,
+            bootstrapConflict: null
           }
+          this.refreshPendingLocalOperations()
           return this.getStatus()
         }
+
+        this.pendingRemoteBootstrap = {
+          folderPath: info.folderPath,
+          syncRootPath: info.syncRootPath,
+          providerHint: info.providerHint
+        }
+        this.stopWatching()
+        this.status = {
+          ...this.status,
+          syncing: false,
+          configured: false,
+          hasCompletedSync: false,
+          folderPath: null,
+          syncRootPath: null,
+          providerHint: null,
+          lastError:
+            'This sync folder already contains another Stickban workspace, and this device also has local data that has never been linked.',
+          bootstrapConflict: {
+            folderPath: info.folderPath,
+            syncRootPath: info.syncRootPath,
+            providerHint: info.providerHint,
+            reason: 'Use the remote workspace only if you want to discard the current local data on this machine.'
+          }
+        }
+        return this.getStatus()
       }
 
-      const importedCheckpoint = this.importNewestCheckpoint(info)
+      if (!remoteHasRecognizedHistory && !isCurrentRootLinked) {
+        this.writeCheckpoint(info)
+        this.pushNotice({
+          id: randomUUID(),
+          level: 'info',
+          message: 'Exported an initial cloud checkpoint from the current local workspace.',
+          createdAtUtc: now()
+        })
+      }
+
+      const importedCheckpoint = this.importNewestCheckpoint(remoteData.checkpoints.map((entry) => entry.checkpoint))
       const exportedCount = this.flushOutbox(info)
-      const importedCount = this.importRemoteOperations(info)
+      const importedCount = this.importRemoteOperations(remoteData.operations.map((entry) => entry.operation))
       const shouldCheckpoint = this.localOpsSinceCheckpoint >= CHECKPOINT_INTERVAL || importedCheckpoint || importedCount > 0
       let syncActivityHappened = importedCheckpoint || exportedCount > 0 || importedCount > 0
       if (shouldCheckpoint) {
@@ -392,25 +484,28 @@ export class SyncManager {
         syncActivityHappened = true
       }
 
-      if (exportedCount > 0) {
-        this.status = { ...this.status, lastExportedAtUtc: now() }
+      const syncMoment = syncActivityHappened ? now() : null
+      if (exportedCount > 0 && syncMoment) {
+        this.status = { ...this.status, lastExportedAtUtc: syncMoment }
       }
-      if (importedCount > 0 || importedCheckpoint) {
-        this.status = { ...this.status, lastImportedAtUtc: now() }
+      if ((importedCount > 0 || importedCheckpoint) && syncMoment) {
+        this.status = { ...this.status, lastImportedAtUtc: syncMoment }
       }
 
       this.writeConfig({
         folderPath: this.status.folderPath,
-        linkedSyncRootPath: info.syncRootPath
+        linkedSyncRootPath: info.syncRootPath,
+        hasCompletedSync: this.status.hasCompletedSync || syncActivityHappened
       })
       this.pendingRemoteBootstrap = null
       this.status = {
         ...this.status,
         syncing: false,
-        lastSyncedAtUtc: syncActivityHappened ? now() : this.status.lastSyncedAtUtc,
-        lastError: null
+        hasCompletedSync: this.status.hasCompletedSync || syncActivityHappened,
+        lastSyncedAtUtc: syncMoment ?? this.status.lastSyncedAtUtc,
+        lastError: null,
+        bootstrapConflict: null
       }
-      this.status = { ...this.status, bootstrapConflict: null }
       this.refreshPendingLocalOperations()
       return this.getStatus()
     } catch (error) {
@@ -434,6 +529,15 @@ export class SyncManager {
       ...this.status,
       notices: [notice, ...this.status.notices].slice(0, 12)
     }
+  }
+
+  private pushNoticeOnce(key: string, notice: SyncNotice): void {
+    if (this.sessionNoticeKeys.has(key)) {
+      return
+    }
+
+    this.sessionNoticeKeys.add(key)
+    this.pushNotice(notice)
   }
 
   private refreshPendingLocalOperations(): void {
@@ -463,29 +567,47 @@ export class SyncManager {
   private readConfig(): SyncConfigFile {
     mkdirSync(this.syncStatePath, { recursive: true })
     if (!existsSync(this.configPath)) {
-      return { folderPath: null }
+      return { folderPath: null, hasCompletedSync: false }
     }
 
-    return safeParseJson<SyncConfigFile>(readFileSync(this.configPath, 'utf8')) ?? { folderPath: null }
+    return safeParseJson<SyncConfigFile>(readFileSync(this.configPath, 'utf8')) ?? { folderPath: null, hasCompletedSync: false }
   }
 
   private writeConfig(config: SyncConfigFile): void {
     mkdirSync(this.syncStatePath, { recursive: true })
-    writeFileSync(this.configPath, JSON.stringify(config, null, 2))
+    writeFileSync(
+      this.configPath,
+      JSON.stringify(
+        {
+          folderPath: config.folderPath,
+          linkedSyncRootPath: config.linkedSyncRootPath ?? null,
+          hasCompletedSync: Boolean(config.hasCompletedSync)
+        },
+        null,
+        2
+      )
+    )
   }
 
-  private applyFolderPath(folderPath: string): void {
+  private applyFolderPath(folderPath: string, options: ApplyFolderPathOptions = {}): void {
     const syncRootPath = join(folderPath, SYNC_FOLDER_NAME)
     mkdirSync(join(syncRootPath, 'operations'), { recursive: true })
     mkdirSync(join(syncRootPath, 'checkpoints'), { recursive: true })
+    this.sessionNoticeKeys.clear()
 
     this.status = {
       ...this.status,
       configured: true,
+      hasCompletedSync: options.hasCompletedSync ?? false,
       folderPath,
       syncRootPath,
       providerHint: inferProviderHint(folderPath),
-      lastError: null
+      lastSyncedAtUtc: null,
+      lastImportedAtUtc: null,
+      lastExportedAtUtc: null,
+      lastCheckpointAtUtc: null,
+      lastError: null,
+      bootstrapConflict: null
     }
 
     this.startWatching()
@@ -496,10 +618,139 @@ export class SyncManager {
     mkdirSync(info.checkpointsPath, { recursive: true })
   }
 
-  private scanRemoteState(info: SyncFolderConfig): RemoteStateSummary {
+  private buildFolderInfoFromPending(pending: PendingRemoteBootstrap): SyncFolderConfig {
     return {
-      operationCount: readdirSync(info.operationsPath).filter((entry) => entry.endsWith('.json')).length,
-      checkpointCount: readdirSync(info.checkpointsPath).filter((entry) => entry.endsWith('.json')).length
+      folderPath: pending.folderPath,
+      syncRootPath: pending.syncRootPath,
+      operationsPath: join(pending.syncRootPath, 'operations'),
+      checkpointsPath: join(pending.syncRootPath, 'checkpoints'),
+      providerHint: pending.providerHint
+    }
+  }
+
+  private loadRemoteData(info: SyncFolderConfig): LoadedRemoteData {
+    const operations = readdirSync(info.operationsPath)
+      .filter((entry) => entry.endsWith('.json'))
+      .map((fileName) => {
+        const sourcePath = join(info.operationsPath, fileName)
+        const parsed = safeParseJson<SyncOperation>(readFileSync(sourcePath, 'utf8'))
+        if (!parsed) {
+          this.pushNoticeOnce(
+            `invalid-operation-file:${sourcePath}`,
+            createFileWarningNotice(`Ignored unreadable remote operation file ${fileName}.`)
+          )
+          return null
+        }
+
+        const validationError = validateOperationShape(parsed)
+        if (validationError) {
+          this.pushNoticeOnce(
+            `invalid-operation-shape:${sourcePath}`,
+            createFileWarningNotice(`Ignored invalid remote operation file ${fileName}: ${validationError}.`)
+          )
+          return null
+        }
+
+        return { fileName, operation: parsed }
+      })
+      .filter((entry): entry is ParsedRemoteOperationFile => Boolean(entry))
+      .sort((left, right) => compareOperations(left.operation, right.operation))
+
+    const checkpoints = readdirSync(info.checkpointsPath)
+      .filter((entry) => entry.endsWith('.json'))
+      .map((fileName) => {
+        const sourcePath = join(info.checkpointsPath, fileName)
+        const parsed = safeParseJson<SyncCheckpoint>(readFileSync(sourcePath, 'utf8'))
+        if (!parsed) {
+          this.pushNoticeOnce(
+            `invalid-checkpoint-file:${sourcePath}`,
+            createFileWarningNotice(`Ignored unreadable remote checkpoint file ${fileName}.`)
+          )
+          return null
+        }
+
+        const validationError = validateCheckpointSnapshot(parsed)
+        if (validationError) {
+          this.pushNoticeOnce(
+            `invalid-checkpoint-shape:${sourcePath}`,
+            createFileWarningNotice(`Ignored invalid remote checkpoint file ${fileName}: ${validationError}`)
+          )
+          return null
+        }
+
+        return { fileName, checkpoint: parsed }
+      })
+      .filter((entry): entry is ParsedRemoteCheckpointFile => Boolean(entry))
+      .sort((left, right) => compareCheckpoints(left.checkpoint, right.checkpoint))
+
+    return { operations, checkpoints }
+  }
+
+  private buildRemoteBootstrapPlan(remoteData: LoadedRemoteData): RemoteBootstrapPlan | null {
+    const operations = remoteData.operations.map((entry) => entry.operation)
+    const checkpointCandidates = remoteData.checkpoints.map((entry) => entry.checkpoint)
+
+    for (const checkpoint of [...checkpointCandidates].reverse()) {
+      const plan = this.stageRemoteBootstrapPlan(checkpoint, operations)
+      if (plan?.hasWorkspaceData) {
+        return plan
+      }
+    }
+
+    if (operations.length > 0) {
+      const operationsOnlyPlan = this.stageRemoteBootstrapPlan(null, operations)
+      if (operationsOnlyPlan?.hasWorkspaceData) {
+        return operationsOnlyPlan
+      }
+    }
+
+    return null
+  }
+
+  private stageRemoteBootstrapPlan(checkpoint: SyncCheckpoint | null, operations: SyncOperation[]): RemoteBootstrapPlan | null {
+    try {
+      return withScratchDatabase(() => {
+        if (checkpoint) {
+          importCheckpoint(checkpoint)
+        }
+
+        operations.forEach((operation) => {
+          applyRemoteOperation(operation)
+        })
+
+        exportCheckpoint()
+        const workspaceState = getWorkspaceBootstrapState()
+        const hasWorkspaceData =
+          workspaceState.boardCount > 0 || workspaceState.columnCount > 0 || workspaceState.cardCount > 0
+
+        return {
+          checkpoint,
+          operations,
+          hasWorkspaceData
+        }
+      })
+    } catch {
+      return null
+    }
+  }
+
+  private applyBootstrapPlan(plan: RemoteBootstrapPlan): { importedCheckpoint: boolean; importedCount: number } {
+    if (plan.checkpoint) {
+      importCheckpoint(plan.checkpoint)
+      this.pushNotice({
+        id: randomUUID(),
+        level: 'info',
+        message: `Imported checkpoint ${plan.checkpoint.checkpointId.slice(0, 8)} from ${plan.checkpoint.deviceId.slice(0, 8)}.`,
+        createdAtUtc: now()
+      })
+    } else {
+      clearWorkspaceForRemoteBootstrap()
+    }
+
+    const importedCount = this.importRemoteOperations(plan.operations)
+    return {
+      importedCheckpoint: Boolean(plan.checkpoint),
+      importedCount
     }
   }
 
@@ -551,37 +802,32 @@ export class SyncManager {
     return exportedCount
   }
 
-  private importRemoteOperations(info: SyncFolderConfig): number {
-    const operations = readdirSync(info.operationsPath)
-      .filter((entry) => entry.endsWith('.json'))
-      .map((entry) => {
-        const parsed = safeParseJson<SyncOperation>(readFileSync(join(info.operationsPath, entry), 'utf8'))
-        return parsed
-      })
-      .filter((entry): entry is SyncOperation => Boolean(entry))
-      .sort(compareOperations)
-
+  private importRemoteOperations(operations: SyncOperation[]): number {
     let importedCount = 0
-    operations.forEach((operation) => {
-      if (isOperationApplied(operation.operationId)) {
-        return
-      }
 
-      const notices = applyRemoteOperation(operation)
-      notices.forEach((notice) => this.pushNotice(notice))
-      importedCount += 1
+    operations.forEach((operation) => {
+      const result = applyRemoteOperation(operation)
+      result.notices.forEach((notice) => {
+        if (result.outcome === 'deferred') {
+          this.pushNoticeOnce(`deferred:${operation.operationId}:${notice.message}`, notice)
+          return
+        }
+        if (result.outcome === 'invalid') {
+          this.pushNoticeOnce(`invalid:${operation.operationId}:${notice.message}`, notice)
+          return
+        }
+        this.pushNotice(notice)
+      })
+
+      if (result.outcome === 'applied') {
+        importedCount += 1
+      }
     })
 
     return importedCount
   }
 
-  private importNewestCheckpoint(info: SyncFolderConfig): boolean {
-    const checkpoints = readdirSync(info.checkpointsPath)
-      .filter((entry) => entry.endsWith('.json'))
-      .map((entry) => safeParseJson<SyncCheckpoint>(readFileSync(join(info.checkpointsPath, entry), 'utf8')))
-      .filter((entry): entry is SyncCheckpoint => Boolean(entry))
-      .sort(compareCheckpoints)
-
+  private importNewestCheckpoint(checkpoints: SyncCheckpoint[]): boolean {
     const localClock = getLocalClock()
     const localApplied = getAppliedOperationsCount()
     const localWorkspace = getWorkspaceBootstrapState()
@@ -602,12 +848,12 @@ export class SyncManager {
           })
           return true
         } catch (error) {
-          this.pushNotice({
-            id: randomUUID(),
-            level: 'warning',
-            message: error instanceof Error ? error.message : 'Skipped an invalid remote checkpoint.',
-            createdAtUtc: now()
-          })
+          this.pushNoticeOnce(
+            `checkpoint-import:${latest.checkpointId}`,
+            createFileWarningNotice(
+              error instanceof Error ? error.message : `Ignored remote checkpoint ${latest.checkpointId.slice(0, 8)} during import.`
+            )
+          )
           continue
         }
       }
@@ -629,12 +875,12 @@ export class SyncManager {
         })
         return true
       } catch (error) {
-        this.pushNotice({
-          id: randomUUID(),
-          level: 'warning',
-          message: error instanceof Error ? error.message : 'Skipped an invalid remote checkpoint.',
-          createdAtUtc: now()
-        })
+        this.pushNoticeOnce(
+          `checkpoint-import:${latest.checkpointId}`,
+          createFileWarningNotice(
+            error instanceof Error ? error.message : `Ignored remote checkpoint ${latest.checkpointId.slice(0, 8)} during import.`
+          )
+        )
       }
     }
 
@@ -661,5 +907,28 @@ export class SyncManager {
         rmSync(join(info.checkpointsPath, entry.file), { force: true })
       })
     }
+  }
+
+  private async createRecoveryBackup(reason: string, info: SyncFolderConfig): Promise<void> {
+    mkdirSync(this.recoveryPath, { recursive: true })
+    const stamp = now().replace(/[-:TZ.]/g, '').slice(0, 17)
+    const recoveryDir = join(this.recoveryPath, `${stamp}-${randomUUID().slice(0, 8)}`)
+    mkdirSync(recoveryDir, { recursive: true })
+
+    await backupDatabase(join(recoveryDir, 'stickban.db'))
+    writeFileSync(
+      join(recoveryDir, 'metadata.json'),
+      JSON.stringify(
+        {
+          createdAtUtc: now(),
+          reason,
+          deviceId: this.status.deviceId,
+          folderPath: info.folderPath,
+          syncRootPath: info.syncRootPath
+        },
+        null,
+        2
+      )
+    )
   }
 }

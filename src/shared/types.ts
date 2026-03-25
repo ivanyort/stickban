@@ -142,6 +142,7 @@ export interface SyncBootstrapConflict {
 export interface SyncStatus {
   configured: boolean
   syncing: boolean
+  hasCompletedSync: boolean
   folderPath: string | null
   syncRootPath: string | null
   providerHint: string | null

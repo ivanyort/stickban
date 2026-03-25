@@ -272,7 +272,9 @@ function App(): JSX.Element {
   const syncBadgeLabel = syncStatus?.configured
     ? syncStatus.syncing
       ? 'Syncing'
-      : syncStatus.pendingLocalOperations > 0
+      : !syncStatus.hasCompletedSync
+        ? 'Connected'
+        : syncStatus.pendingLocalOperations > 0
         ? 'Pending sync'
         : 'Cloud sync'
     : 'Local only'
@@ -283,8 +285,10 @@ function App(): JSX.Element {
     ? 'Saving changes locally'
     : !syncStatus?.configured
       ? 'All changes saved locally'
-      : syncStatus.syncing
+    : syncStatus.syncing
         ? 'Saved locally • Syncing cloud changes'
+        : !syncStatus.hasCompletedSync
+          ? 'Saved locally • Connected • Not synced yet'
         : syncStatus.pendingLocalOperations > 0
           ? 'Saved locally • Sync pending'
           : `Saved locally • Cloud sync up to date${lastSyncRelative ? ` • ${lastSyncRelative}` : ''}`
@@ -293,7 +297,7 @@ function App(): JSX.Element {
   const updateBanner = getUpdateBanner(updateStatus)
   const footerStatusDotClass = saving
     ? 'bg-amber-500'
-    : syncStatus?.configured && (syncStatus.syncing || syncStatus.pendingLocalOperations > 0)
+    : syncStatus?.configured && (!syncStatus.hasCompletedSync || syncStatus.syncing || syncStatus.pendingLocalOperations > 0)
       ? 'bg-sky-500'
       : 'bg-emerald-500'
 

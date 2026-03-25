@@ -162,8 +162,13 @@ app.whenReady().then(() => {
   })
 })
 
-app.on('window-all-closed', () => {
+app.on('before-quit', () => {
+  syncManager?.flushPendingLocalOperationsToRemote()
+  syncManager?.dispose()
   updateManager?.dispose()
+})
+
+app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }

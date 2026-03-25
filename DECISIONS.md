@@ -197,6 +197,8 @@
   O produto deixa de depender de APIs do Google Drive ou OAuth. A corretude do sync agora depende de replay do log de operacoes, tombstones e recuperacao por checkpoints, em vez de um unico arquivo de snapshot compartilhado. A documentacao publica deve descrever o sync por pasta sincronizada como realidade atual do repositorio.
   Remote bootstrap into an already populated synced folder must import and validate remote state before any local export or checkpoint write is allowed, and invalid checkpoints or orphan remote operations must be rejected instead of becoming the new canonical state.
   O bootstrap remoto em uma pasta sincronizada ja populada deve importar e validar o estado remoto antes de permitir qualquer export local ou escrita de checkpoint, e checkpoints invalidos ou operacoes remotas orfas devem ser rejeitados em vez de virarem o novo estado canonico.
+  Deferred remote operations caused by missing local dependencies must remain retryable instead of being recorded as consumed, and destructive remote-adoption flows must create a local recovery backup before replacing the active workspace.
+  Operacoes remotas adiadas por dependencias locais ausentes devem continuar reprocessaveis em vez de serem registradas como consumidas, e fluxos destrutivos de adocao do remoto devem criar um backup local de recovery antes de substituir o workspace ativo.
 
 ## D-014: Windows Auto-update via GitHub Releases
 
