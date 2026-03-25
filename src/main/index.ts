@@ -132,6 +132,7 @@ function registerIpc(): void {
   ipcMain.handle('sync:chooseFolder', () => syncManager?.chooseSyncFolder(mainWindow))
   ipcMain.handle('sync:clearFolder', () => syncManager?.clearSyncFolder())
   ipcMain.handle('sync:runNow', () => syncManager?.syncNow())
+  ipcMain.handle('sync:adoptRemoteWorkspace', () => syncManager?.adoptRemoteWorkspace())
   ipcMain.handle('sync:getFolderInfo', () => syncManager?.getFolderInfo())
   ipcMain.handle('sync:getNotices', () => syncManager?.getNotices())
 }

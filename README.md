@@ -13,7 +13,7 @@ Stickban is a desktop Kanban application focused on speed, low friction, and con
 This repository is in bootstrap stage. The product specification exists in [`SPEC.md`](./SPEC.md), and the first runnable application scaffold is now in place.
 
 The documentation in this repository is intended to establish direction while implementation is still maturing.
-The current runnable milestone is still local-first, but now also includes cloud sync through a user-selected synced folder. The app currently covers multiple boards, board-specific columns, column reordering and cross-board moves, SQLite persistence, drag and drop, always-on-top behavior, immutable sync operation files, and periodic sync checkpoints.
+The current runnable milestone is still local-first, but now also includes cloud sync through a user-selected synced folder. The app currently covers multiple boards, board-specific columns, column reordering and cross-board moves, SQLite persistence, drag and drop, always-on-top behavior, immutable sync operation files, periodic sync checkpoints, and guarded first-time sync bootstrap behavior.
 
 ## Product Direction
 

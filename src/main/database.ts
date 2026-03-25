@@ -35,6 +35,14 @@ interface EntitySyncState {
 
 type OperationEmitter = (operation: SyncOperation) => void
 
+export interface WorkspaceBootstrapState {
+  boardCount: number
+  columnCount: number
+  cardCount: number
+  hasAppliedOperations: boolean
+  isPristineSeedWorkspace: boolean
+}
+
 let db: Database.Database | null = null
 let operationEmitter: OperationEmitter | null = null
 
@@ -1102,6 +1110,49 @@ export function getAppliedOperationsIds(): string[] {
 
 export function isOperationApplied(operationId: string): boolean {
   return hasAppliedOperation(operationId)
+}
+
+export function getWorkspaceBootstrapState(): WorkspaceBootstrapState {
+  const database = getDb()
+  const boards = database
+    .prepare('SELECT id, title FROM boards WHERE deleted_at IS NULL ORDER BY order_key ASC, id ASC')
+    .all() as Array<{ id: string; title: string }>
+  const columns = database
+    .prepare('SELECT board_id, title FROM columns WHERE deleted_at IS NULL ORDER BY order_key ASC, id ASC')
+    .all() as Array<{ board_id: string; title: string }>
+  const cardCountRow = database
+    .prepare('SELECT COUNT(*) AS count FROM cards WHERE deleted_at IS NULL')
+    .get() as { count: number }
+  const hasAppliedOperations = getAppliedOperationCount() > 0
+
+  const isPristineSeedWorkspace =
+    boards.length === 1 &&
+    boards[0].title === 'Stickban' &&
+    columns.length === DEFAULT_COLUMNS.length &&
+    columns.every((column) => column.board_id === boards[0].id) &&
+    DEFAULT_COLUMNS.every((title) => columns.some((column) => column.title === title)) &&
+    cardCountRow.count === 0
+
+  return {
+    boardCount: boards.length,
+    columnCount: columns.length,
+    cardCount: cardCountRow.count,
+    hasAppliedOperations,
+    isPristineSeedWorkspace
+  }
+}
+
+export function clearWorkspaceForRemoteBootstrap(): void {
+  const database = getDb()
+  const clear = database.transaction(() => {
+    database.prepare('DELETE FROM cards').run()
+    database.prepare('DELETE FROM columns').run()
+    database.prepare('DELETE FROM boards').run()
+    database.prepare('DELETE FROM applied_operations').run()
+    setStateValue(ACTIVE_BOARD_KEY, '')
+  })
+
+  clear()
 }
 
 export function createBoard(draft: BoardDraft): WorkspaceRecord {

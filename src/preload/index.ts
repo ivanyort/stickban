@@ -32,6 +32,7 @@ const api: StickbanApi = {
   chooseSyncFolder: () => ipcRenderer.invoke('sync:chooseFolder'),
   clearSyncFolder: () => ipcRenderer.invoke('sync:clearFolder'),
   syncNow: () => ipcRenderer.invoke('sync:runNow'),
+  adoptRemoteWorkspace: () => ipcRenderer.invoke('sync:adoptRemoteWorkspace'),
   getSyncFolderInfo: () => ipcRenderer.invoke('sync:getFolderInfo'),
   getSyncNotices: () => ipcRenderer.invoke('sync:getNotices')
 }

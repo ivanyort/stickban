@@ -49,6 +49,7 @@ interface BoardState {
   chooseSyncFolder: () => Promise<void>
   clearSyncFolder: () => Promise<void>
   syncNow: () => Promise<void>
+  adoptRemoteWorkspace: () => Promise<void>
   refreshSyncStatus: () => Promise<void>
   refreshWorkspace: () => Promise<void>
 }
@@ -301,6 +302,21 @@ export const useBoardStore = create<BoardState>((set) => ({
       set({ ...applyWorkspace(workspace), saving: false, syncStatus, syncFolderInfo, syncNotices })
     } catch (error) {
       set({ saving: false, error: error instanceof Error ? error.message : 'Failed to run sync' })
+    }
+  },
+  adoptRemoteWorkspace: async () => {
+    try {
+      set({ saving: true, error: null })
+      await window.stickban.adoptRemoteWorkspace()
+      const [workspace, syncStatus, syncFolderInfo, syncNotices] = await Promise.all([
+        window.stickban.getWorkspace(),
+        window.stickban.getSyncStatus(),
+        window.stickban.getSyncFolderInfo(),
+        window.stickban.getSyncNotices()
+      ])
+      set({ ...applyWorkspace(workspace), saving: false, syncStatus, syncFolderInfo, syncNotices })
+    } catch (error) {
+      set({ saving: false, error: error instanceof Error ? error.message : 'Failed to adopt remote workspace' })
     }
   }
 }))

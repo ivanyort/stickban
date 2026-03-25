@@ -66,6 +66,7 @@ function App(): JSX.Element {
     chooseSyncFolder,
     clearSyncFolder,
     syncNow,
+    adoptRemoteWorkspace,
     refreshSyncStatus,
     refreshWorkspace
   } = useBoardStore()
@@ -719,6 +720,32 @@ function App(): JSX.Element {
                 {syncStatus?.lastError ? (
                   <div className="mt-3 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-xs text-destructive">
                     {syncStatus.lastError}
+                  </div>
+                ) : null}
+                {syncStatus?.bootstrapConflict ? (
+                  <div className="mt-3 rounded-xl border border-amber-400/20 bg-amber-400/10 px-3 py-3 text-xs text-amber-900">
+                    <div className="font-semibold">Remote workspace detected</div>
+                    <div className="mt-1">{syncStatus.bootstrapConflict.reason}</div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-amber-700/20 bg-white/60 text-amber-900 hover:bg-white"
+                        onClick={() => {
+                          const confirmed = window.confirm(
+                            `Use the remote workspace from "${syncStatus.bootstrapConflict?.providerHint}" and discard the current local data on this machine?`
+                          )
+                          if (confirmed) {
+                            void adoptRemoteWorkspace()
+                          }
+                        }}
+                      >
+                        Use remote and discard local
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-amber-900" onClick={() => void clearSyncFolder()}>
+                        Cancel
+                      </Button>
+                    </div>
                   </div>
                 ) : null}
               </div>

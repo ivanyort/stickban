@@ -35,6 +35,7 @@ This document tracks the real implementation state of the repository and the hig
 - Card dragging now uses pointer-driven interaction instead of native HTML drag, with a custom ghost preview and more tolerant reordering inside and across columns in the active board
 - The renderer footer now shows the runtime app version reported by Electron so packaged builds can display the same version number used by automated releases
 - Synced-folder cloud sync now exists through immutable operation files, periodic checkpoints, local outbox handling, and a settings/status panel in the renderer
+- First-time synced-folder bootstrap now exports an initial checkpoint into an empty remote folder and blocks silent linking when a populated remote folder conflicts with unsynchronized local data
 - GitHub release/version automation configured for `main`
 - Windows release packaging simplified to NSIS installer only
 - Public GitHub Releases currently publish Windows artifacts only

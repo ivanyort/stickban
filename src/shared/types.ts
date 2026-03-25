@@ -132,6 +132,13 @@ export interface SyncFolderConfig {
   providerHint: string
 }
 
+export interface SyncBootstrapConflict {
+  folderPath: string
+  syncRootPath: string
+  providerHint: string
+  reason: string
+}
+
 export interface SyncStatus {
   configured: boolean
   syncing: boolean
@@ -145,6 +152,7 @@ export interface SyncStatus {
   lastExportedAtUtc: string | null
   lastCheckpointAtUtc: string | null
   lastError: string | null
+  bootstrapConflict: SyncBootstrapConflict | null
   notices: SyncNotice[]
 }
 
@@ -196,6 +204,7 @@ export interface StickbanApi {
   chooseSyncFolder: () => Promise<SyncStatus>
   clearSyncFolder: () => Promise<SyncStatus>
   syncNow: () => Promise<SyncStatus>
+  adoptRemoteWorkspace: () => Promise<SyncStatus>
   getSyncFolderInfo: () => Promise<SyncFolderConfig | null>
   getSyncNotices: () => Promise<SyncNotice[]>
 }
