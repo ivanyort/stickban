@@ -264,6 +264,7 @@ export class SyncManager {
 
     const pending = this.pendingRemoteBootstrap
     clearWorkspaceForRemoteBootstrap()
+    this.clearOutbox()
     this.applyFolderPath(pending.folderPath)
     this.writeConfig({
       folderPath: pending.folderPath,
@@ -407,6 +408,20 @@ export class SyncManager {
     this.status = { ...this.status, pendingLocalOperations: count }
   }
 
+  private clearOutbox(): void {
+    if (!existsSync(this.outboxPath)) {
+      return
+    }
+
+    readdirSync(this.outboxPath)
+      .filter((entry) => entry.endsWith('.json'))
+      .forEach((entry) => {
+        rmSync(join(this.outboxPath, entry), { force: true })
+      })
+
+    this.refreshPendingLocalOperations()
+  }
+
   private readConfig(): SyncConfigFile {
     mkdirSync(this.syncStatePath, { recursive: true })
     if (!existsSync(this.configPath)) {
@@ -464,7 +479,7 @@ export class SyncManager {
     this.watchStop = () => watcher.close()
     this.intervalTimer = setInterval(() => {
       void this.syncNow()
-    }, 45_000)
+    }, 10_000)
   }
 
   private stopWatching(): void {

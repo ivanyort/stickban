@@ -1150,6 +1150,7 @@ export function clearWorkspaceForRemoteBootstrap(): void {
     database.prepare('DELETE FROM boards').run()
     database.prepare('DELETE FROM applied_operations').run()
     setStateValue(ACTIVE_BOARD_KEY, '')
+    setStateValue(LAMPORT_CLOCK_KEY, '0')
   })
 
   clear()
