@@ -27,9 +27,14 @@ let syncManager: SyncManager | null = null
 let updateManager: UpdateManager | null = null
 let backgroundServicesInitialized = false
 const WINDOWS_APP_USER_MODEL_ID = 'com.ivanyort.stickban'
+const hasSingleInstanceLock = app.requestSingleInstanceLock()
 
 if (process.platform === 'win32') {
   app.setAppUserModelId(WINDOWS_APP_USER_MODEL_ID)
+}
+
+if (!hasSingleInstanceLock) {
+  app.quit()
 }
 
 function isLaunchOnStartupSupported(): boolean {
@@ -89,6 +94,32 @@ function initializeBackgroundServices(): void {
   backgroundServicesInitialized = true
   syncManager?.initialize()
   updateManager?.initialize()
+}
+
+function presentMainWindow(): void {
+  if (!mainWindow) {
+    if (!app.isReady()) {
+      return
+    }
+
+    mainWindow = createMainWindow()
+    mainWindow.once('ready-to-show', () => {
+      setImmediate(() => {
+        initializeBackgroundServices()
+      })
+    })
+    return
+  }
+
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore()
+  }
+
+  if (!mainWindow.isVisible()) {
+    mainWindow.show()
+  }
+
+  mainWindow.focus()
 }
 
 function createMainWindow(): BrowserWindow {
@@ -216,26 +247,29 @@ function registerIpc(): void {
   })
 }
 
-app.whenReady().then(() => {
-  Menu.setApplicationMenu(null)
-  initializeDatabase(app.getPath('userData'))
-  applyLaunchOnStartupPreference(getLaunchOnStartupPreference())
-  syncManager = new SyncManager(app.getPath('userData'))
-  updateManager = new UpdateManager()
-  registerIpc()
-  mainWindow = createMainWindow()
-  mainWindow.once('ready-to-show', () => {
-    setImmediate(() => {
-      initializeBackgroundServices()
-    })
+if (hasSingleInstanceLock) {
+  app.on('second-instance', () => {
+    presentMainWindow()
   })
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      mainWindow = createMainWindow()
-    }
+  app.whenReady().then(() => {
+    Menu.setApplicationMenu(null)
+    initializeDatabase(app.getPath('userData'))
+    applyLaunchOnStartupPreference(getLaunchOnStartupPreference())
+    syncManager = new SyncManager(app.getPath('userData'))
+    updateManager = new UpdateManager()
+    registerIpc()
+    presentMainWindow()
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        presentMainWindow()
+      } else {
+        presentMainWindow()
+      }
+    })
   })
-})
+}
 
 app.on('before-quit', () => {
   syncManager?.flushPendingLocalOperationsToRemote()
