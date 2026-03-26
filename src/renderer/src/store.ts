@@ -249,7 +249,7 @@ export const useBoardStore = create<BoardState>((set) => ({
     })
   },
   toggleLaunchOnStartup: async () => {
-    const current = useBoardStore.getState().launchOnStartup
+    const current = useBoardStore.getState().launchOnStartupConfigured
     const windowState = await window.stickban.setLaunchOnStartup(!current)
     set({
       alwaysOnTop: windowState.alwaysOnTop,
