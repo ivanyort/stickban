@@ -13,7 +13,7 @@ Stickban is a desktop Kanban application focused on speed, low friction, and con
 This repository is in bootstrap stage. The product specification exists in [`SPEC.md`](./SPEC.md), and the first runnable application scaffold is now in place.
 
 The documentation in this repository is intended to establish direction while implementation is still maturing.
-The current runnable milestone is still local-first, but now also includes cloud sync through a user-selected synced folder. The app currently covers multiple boards, board-specific columns, column reordering and cross-board moves, SQLite persistence, drag and drop, always-on-top behavior, an optional Windows launch-on-login preference that stays disabled by default and now distinguishes app-level registration from Windows-level startup disablement, immutable sync operation files, periodic sync checkpoints, guarded first-time sync bootstrap behavior, checkpoint validation, retry of out-of-order remote operations with missing dependencies, local recovery backups before destructive remote adoption, and rejection of orphan remote operations that would corrupt workspace state.
+The current runnable milestone is still local-first, but now also includes cloud sync through a user-selected synced folder. The app currently covers multiple boards, board-specific columns, column reordering and cross-board moves, SQLite persistence, drag and drop, always-on-top behavior, an optional Windows launch-on-login preference that stays disabled by default and now distinguishes app-level registration from Windows-level startup disablement, startup flow that prioritizes showing the local window before sync and update background work catches up, immutable sync operation files, periodic sync checkpoints, guarded first-time sync bootstrap behavior, checkpoint validation, retry of out-of-order remote operations with missing dependencies, local recovery backups before destructive remote adoption, and rejection of orphan remote operations that would corrupt workspace state.
 
 ## Product Direction
 
@@ -38,7 +38,7 @@ The current runnable milestone is still local-first, but now also includes cloud
 - Keep the local desktop stack: Electron, React + TypeScript, `better-sqlite3`, Zustand, Tailwind CSS, and renderer-managed drag interactions
 - Keep SQLite as the operational source of truth while sync propagates immutable operation files plus periodic checkpoints through a synced folder
 - Avoid provider APIs, OAuth, and managed cloud infrastructure
-- Focus the current milestone on a local-first workspace with multiple boards, board-specific columns, inline column rename, column drag and drop, SQLite persistence, always-on-top behavior, optional Windows launch-on-login with clearer Windows startup-state diagnostics, and synced-folder cloud sync
+- Focus the current milestone on a local-first workspace with multiple boards, board-specific columns, inline column rename, column drag and drop, SQLite persistence, always-on-top behavior, optional Windows launch-on-login with clearer Windows startup-state diagnostics, startup that favors local window visibility before background sync/update work, and synced-folder cloud sync
 
 ## Local Development
 
@@ -186,7 +186,7 @@ The current sync model works without paid services, provider APIs, OAuth, or man
 The repository now also includes an automated regression suite focused on sync bootstrap, deferred remote operations, recovery backups, shutdown flush behavior, and immediate workspace refresh after sync-folder selection.
 The app footer displays the runtime application version exposed by Electron, which is intended to match the version injected into packaged releases by the GitHub Actions release workflow.
 Packaged Windows builds now also check GitHub Releases for updates on startup and periodically during the session, and the renderer surfaces those checks more explicitly through footer status and update banners.
-The sync/status panel now also exposes an opt-in Windows launch-on-login toggle, which persists locally, defaults to disabled, and now reflects when Windows Startup Apps has disabled the registered entry.
+The sync/status panel now also exposes an opt-in Windows launch-on-login toggle, which persists locally, defaults to disabled, and now reflects when Windows Startup Apps has disabled the registered entry. Desktop startup now prioritizes getting the local window on screen before sync and update services continue in the background.
 
 ## License
 

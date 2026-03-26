@@ -30,6 +30,7 @@ This document tracks the real implementation state of the repository and the hig
 - Electron window now uses custom top-bar controls for close, minimize, and maximize/restore
 - Desktop window chrome now uses platform-specific native behavior: Windows uses `titleBarStyle: hidden` with `titleBarOverlay` for native window controls without the traditional title bar, while Linux keeps a frameless window with custom controls in the renderer
 - Packaged Windows builds now expose a persisted launch-on-login preference in the renderer, disabled by default, applied through Electron login item settings, and report when Windows has the startup entry configured but disabled at the OS level
+- Desktop startup now prioritizes local window creation before sync and update background services initialize, improving perceived launch responsiveness during Windows login
 - Board title edits in the header now persist through SQLite instead of living only in renderer state
 - Multiple boards now exist as first-class persisted entities, with active board selection restored across app restarts
 - Columns are now board-specific and customizable, including create, rename, and delete flows in the renderer

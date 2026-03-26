@@ -25,6 +25,7 @@ import { UpdateManager } from './update'
 let mainWindow: BrowserWindow | null = null
 let syncManager: SyncManager | null = null
 let updateManager: UpdateManager | null = null
+let backgroundServicesInitialized = false
 const WINDOWS_APP_USER_MODEL_ID = 'com.ivanyort.stickban'
 
 if (process.platform === 'win32') {
@@ -78,6 +79,16 @@ function getWindowState() {
     platform: process.platform,
     appVersion: app.getVersion()
   }
+}
+
+function initializeBackgroundServices(): void {
+  if (backgroundServicesInitialized) {
+    return
+  }
+
+  backgroundServicesInitialized = true
+  syncManager?.initialize()
+  updateManager?.initialize()
 }
 
 function createMainWindow(): BrowserWindow {
@@ -210,11 +221,14 @@ app.whenReady().then(() => {
   initializeDatabase(app.getPath('userData'))
   applyLaunchOnStartupPreference(getLaunchOnStartupPreference())
   syncManager = new SyncManager(app.getPath('userData'))
-  syncManager.initialize()
   updateManager = new UpdateManager()
-  updateManager.initialize()
   registerIpc()
   mainWindow = createMainWindow()
+  mainWindow.once('ready-to-show', () => {
+    setImmediate(() => {
+      initializeBackgroundServices()
+    })
+  })
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
