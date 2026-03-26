@@ -32,6 +32,7 @@ This document tracks the real implementation state of the repository and the hig
 - Packaged Windows builds now expose a persisted launch-on-login preference in the renderer, disabled by default, applied through Electron login item settings, and report when Windows has the startup entry configured but disabled at the OS level
 - Desktop startup now prioritizes local window creation before sync and update background services initialize, improving perceived launch responsiveness during Windows login
 - The main Electron process now enforces a single-instance lock and focuses the existing window instead of allowing duplicate app instances during startup or manual relaunch
+- Packaged Windows startup now also prunes duplicate Stickban login-item registry entries before reapplying the current launch-on-login preference, preventing stale Startup Apps duplicates from accumulating across updates
 - Board title edits in the header now persist through SQLite instead of living only in renderer state
 - Multiple boards now exist as first-class persisted entities, with active board selection restored across app restarts
 - Columns are now board-specific and customizable, including create, rename, and delete flows in the renderer

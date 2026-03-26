@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, Menu } from 'electron'
-import { join } from 'node:path'
+import { execFileSync } from 'node:child_process'
+import { basename, join } from 'node:path'
 import {
   createBoard,
   createCard,
@@ -28,6 +29,11 @@ let updateManager: UpdateManager | null = null
 let backgroundServicesInitialized = false
 const WINDOWS_APP_USER_MODEL_ID = 'com.ivanyort.stickban'
 const hasSingleInstanceLock = app.requestSingleInstanceLock()
+const WINDOWS_RUN_KEY_USER = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'
+const WINDOWS_RUN_KEY_MACHINE = 'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'
+const WINDOWS_STARTUP_APPROVED_KEY_USER = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run'
+const WINDOWS_STARTUP_APPROVED_KEY_MACHINE =
+  'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run'
 
 if (process.platform === 'win32') {
   app.setAppUserModelId(WINDOWS_APP_USER_MODEL_ID)
@@ -58,6 +64,63 @@ function getLaunchOnStartupState(): { configured: boolean; enabled: boolean } {
     configured: settings.openAtLogin,
     enabled: settings.executableWillLaunchAtLogin
   }
+}
+
+function normalizeWindowsPath(value: string): string {
+  return value.replace(/\//g, '\\').toLowerCase()
+}
+
+function getRunRegistryPath(scope: 'user' | 'machine'): string {
+  return scope === 'machine' ? WINDOWS_RUN_KEY_MACHINE : WINDOWS_RUN_KEY_USER
+}
+
+function getStartupApprovedRegistryPath(scope: 'user' | 'machine'): string {
+  return scope === 'machine' ? WINDOWS_STARTUP_APPROVED_KEY_MACHINE : WINDOWS_STARTUP_APPROVED_KEY_USER
+}
+
+function toLaunchItemScope(scope: string): 'user' | 'machine' {
+  return scope === 'machine' ? 'machine' : 'user'
+}
+
+function deleteRegistryValue(keyPath: string, valueName: string): void {
+  try {
+    execFileSync('reg.exe', ['delete', keyPath, '/v', valueName, '/f'], {
+      stdio: 'ignore',
+      windowsHide: true
+    })
+  } catch {
+    // Ignore missing keys and values. Cleanup is best-effort.
+  }
+}
+
+function isStickbanLaunchItem(itemPath: string): boolean {
+  const normalizedItemPath = normalizeWindowsPath(itemPath)
+  const normalizedCurrentPath = normalizeWindowsPath(process.execPath)
+  const executableName = basename(normalizedCurrentPath)
+  return normalizedItemPath === normalizedCurrentPath || basename(normalizedItemPath) === executableName
+}
+
+function cleanupDuplicateLaunchOnStartupEntries(): void {
+  if (!isLaunchOnStartupSupported()) {
+    return
+  }
+
+  const settings = app.getLoginItemSettings({
+    path: process.execPath
+  })
+  const stickbanItems = settings.launchItems.filter((item) => isStickbanLaunchItem(item.path))
+
+  if (stickbanItems.length <= 1) {
+    return
+  }
+
+  for (const item of stickbanItems) {
+    const scope = toLaunchItemScope(item.scope)
+    deleteRegistryValue(getRunRegistryPath(scope), item.name)
+    deleteRegistryValue(getStartupApprovedRegistryPath(scope), item.name)
+  }
+
+  applyLaunchOnStartupPreference(getLaunchOnStartupPreference())
 }
 
 function applyLaunchOnStartupPreference(enabled: boolean): void {
@@ -255,6 +318,7 @@ if (hasSingleInstanceLock) {
   app.whenReady().then(() => {
     Menu.setApplicationMenu(null)
     initializeDatabase(app.getPath('userData'))
+    cleanupDuplicateLaunchOnStartupEntries()
     applyLaunchOnStartupPreference(getLaunchOnStartupPreference())
     syncManager = new SyncManager(app.getPath('userData'))
     updateManager = new UpdateManager()
