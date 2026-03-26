@@ -7,11 +7,13 @@ import {
   deleteBoard,
   deleteCard,
   deleteColumn,
+  getLaunchOnStartupPreference,
   getWorkspace,
   initializeDatabase,
   moveColumn,
   moveCard,
   setActiveBoard,
+  setLaunchOnStartupPreference,
   updateBoard,
   updateCard,
   updateColumn
@@ -23,6 +25,33 @@ import { UpdateManager } from './update'
 let mainWindow: BrowserWindow | null = null
 let syncManager: SyncManager | null = null
 let updateManager: UpdateManager | null = null
+
+function isLaunchOnStartupSupported(): boolean {
+  return process.platform === 'win32' && app.isPackaged
+}
+
+function applyLaunchOnStartupPreference(enabled: boolean): void {
+  if (!isLaunchOnStartupSupported()) {
+    return
+  }
+
+  app.setLoginItemSettings({
+    openAtLogin: enabled
+  })
+}
+
+function getWindowState() {
+  return {
+    alwaysOnTop: mainWindow?.isAlwaysOnTop() ?? false,
+    launchOnStartup: isLaunchOnStartupSupported()
+      ? app.getLoginItemSettings().openAtLogin
+      : getLaunchOnStartupPreference(),
+    launchOnStartupSupported: isLaunchOnStartupSupported(),
+    isMaximized: mainWindow?.isMaximized() ?? false,
+    platform: process.platform,
+    appVersion: app.getVersion()
+  }
+}
 
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -91,27 +120,33 @@ function registerIpc(): void {
   ipcMain.handle('card:move', (_event, payload: CardMovePayload) =>
     moveCard(payload.cardId, payload.toColumnId, payload.toIndex)
   )
-  ipcMain.handle('window:getState', () => ({
-    alwaysOnTop: mainWindow?.isAlwaysOnTop() ?? false,
-    isMaximized: mainWindow?.isMaximized() ?? false,
-    platform: process.platform,
-    appVersion: app.getVersion()
-  }))
+  ipcMain.handle('window:getState', () => getWindowState())
   ipcMain.handle('window:setAlwaysOnTop', (_event, value: boolean) => {
     mainWindow?.setAlwaysOnTop(value)
-    return {
-      alwaysOnTop: mainWindow?.isAlwaysOnTop() ?? false,
-      isMaximized: mainWindow?.isMaximized() ?? false,
-      platform: process.platform,
-      appVersion: app.getVersion()
+    return getWindowState()
+  })
+  ipcMain.handle('window:setLaunchOnStartup', (_event, value: boolean) => {
+    if (!isLaunchOnStartupSupported()) {
+      return getWindowState()
     }
+
+    setLaunchOnStartupPreference(value)
+    applyLaunchOnStartupPreference(value)
+    return getWindowState()
   })
   ipcMain.handle('window:minimize', () => {
     mainWindow?.minimize()
   })
   ipcMain.handle('window:toggleMaximize', () => {
     if (!mainWindow) {
-      return { alwaysOnTop: false, isMaximized: false, platform: process.platform, appVersion: app.getVersion() }
+      return {
+        alwaysOnTop: false,
+        launchOnStartup: getLaunchOnStartupPreference(),
+        launchOnStartupSupported: isLaunchOnStartupSupported(),
+        isMaximized: false,
+        platform: process.platform,
+        appVersion: app.getVersion()
+      }
     }
 
     if (mainWindow.isMaximized()) {
@@ -120,12 +155,7 @@ function registerIpc(): void {
       mainWindow.maximize()
     }
 
-    return {
-      alwaysOnTop: mainWindow.isAlwaysOnTop(),
-      isMaximized: mainWindow.isMaximized(),
-      platform: process.platform,
-      appVersion: app.getVersion()
-    }
+    return getWindowState()
   })
   ipcMain.handle('window:close', () => {
     mainWindow?.close()
@@ -148,6 +178,7 @@ function registerIpc(): void {
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null)
   initializeDatabase(app.getPath('userData'))
+  applyLaunchOnStartupPreference(getLaunchOnStartupPreference())
   syncManager = new SyncManager(app.getPath('userData'))
   syncManager.initialize()
   updateManager = new UpdateManager()

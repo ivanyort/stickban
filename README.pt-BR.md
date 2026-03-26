@@ -13,7 +13,7 @@ Stickban e um aplicativo desktop de Kanban focado em velocidade, baixo atrito e 
 Este repositorio esta em fase de bootstrap. A especificacao do produto existe em [`SPEC.md`](./SPEC.md), e o primeiro scaffold executavel da aplicacao agora ja existe.
 
 A documentacao deste repositorio serve para estabelecer direcao enquanto a implementacao ainda amadurece.
-O milestone executavel atual continua local-first, mas agora tambem inclui sync em nuvem via pasta sincronizada escolhida pelo usuario. O app atual cobre multiplos quadros locais, colunas especificas por quadro, reordenacao e movimento de colunas entre quadros, persistencia em SQLite, drag and drop, always-on-top, arquivos imutaveis de operacoes de sync, checkpoints periodicos, protecoes no bootstrap inicial do sync, validacao estrutural de checkpoints, reprocessamento de operacoes remotas fora de ordem com dependencias ausentes, backups locais de recovery antes de adocoes remotas destrutivas e rejeicao de operacoes remotas orfas que corromperiam o workspace.
+O milestone executavel atual continua local-first, mas agora tambem inclui sync em nuvem via pasta sincronizada escolhida pelo usuario. O app atual cobre multiplos quadros locais, colunas especificas por quadro, reordenacao e movimento de colunas entre quadros, persistencia em SQLite, drag and drop, always-on-top, uma opcao de iniciar com o login do Windows que permanece desativada por padrao, arquivos imutaveis de operacoes de sync, checkpoints periodicos, protecoes no bootstrap inicial do sync, validacao estrutural de checkpoints, reprocessamento de operacoes remotas fora de ordem com dependencias ausentes, backups locais de recovery antes de adocoes remotas destrutivas e rejeicao de operacoes remotas orfas que corromperiam o workspace.
 
 ## Direcao do Produto
 
@@ -38,7 +38,7 @@ O milestone executavel atual continua local-first, mas agora tambem inclui sync 
 - Manter o stack desktop local: Electron, React + TypeScript, `better-sqlite3`, Zustand, Tailwind CSS e interacoes de drag and drop gerenciadas no renderer
 - Manter o SQLite como fonte operacional de verdade enquanto o sync propaga arquivos imutaveis de operacoes e checkpoints periodicos por uma pasta sincronizada
 - Evitar APIs de provedores, OAuth e infraestrutura cloud gerenciada
-- Focar o milestone atual em um workspace local-first com multiplos quadros, colunas especificas por quadro, rename inline de colunas, drag and drop de colunas, persistencia em SQLite, always-on-top e sync em pasta sincronizada
+- Focar o milestone atual em um workspace local-first com multiplos quadros, colunas especificas por quadro, rename inline de colunas, drag and drop de colunas, persistencia em SQLite, always-on-top, inicio opcional com o login do Windows e sync em pasta sincronizada
 
 ## Desenvolvimento Local
 
@@ -137,7 +137,7 @@ A estrutura abaixo esta planejada, mas ainda nao foi implementada.
 
 Para o roadmap detalhado, veja [`ROADMAP.md`](./ROADMAP.md).
 
-- Atual: workspace local, multiplos quadros, colunas customizaveis, drag and drop de colunas, persistencia em SQLite, always-on-top e sync em pasta sincronizada
+- Atual: workspace local, multiplos quadros, colunas customizaveis, drag and drop de colunas, persistencia em SQLite, always-on-top, inicio opcional com o login do Windows e sync em pasta sincronizada
 - Proxima fase: interface multi idiomas, system tray, temas e hardening do sync
 - Futuro: campos customizados, notificacoes, inspecao mais rica de conflitos e recuperacao, app mobile complementar
 
@@ -164,6 +164,7 @@ Para o roadmap detalhado, veja [`ROADMAP.md`](./ROADMAP.md).
 - `feat` sobe minor, `fix` e tipos operacionais sobem patch, e `BREAKING CHANGE` ou `type!` sobem major
 - Artefatos publicos de release sao gerados atualmente apenas para Windows
 - As releases de Windows sao distribuidas como instalador NSIS
+- Builds empacotadas de Windows expoem uma configuracao opt-in para iniciar com o login do usuario, e ela permanece desativada por padrao
 - Builds empacotadas de Windows agora verificam atualizacoes em GitHub Releases dentro do app e podem reiniciar para instalar um update baixado
 - O instalador e o updater in-app mantem desativada por padrao a reabertura automatica do app depois da instalacao/update
 - O empacotamento para Linux continua disponivel localmente, mas artefatos Linux nao sao publicados nas GitHub Releases neste momento
@@ -185,6 +186,7 @@ O modelo atual de sync funciona sem servicos pagos, APIs de provedores, OAuth ou
 O repositorio agora tambem inclui uma suite automatizada de regressao focada em bootstrap do sync, operacoes remotas adiadas, backups de recovery, flush no encerramento e refresh imediato do workspace apos a escolha da pasta sincronizada.
 O rodape do app exibe a versao de runtime exposta pelo Electron, pensada para coincidir com a versao injetada nas releases empacotadas pelo workflow de GitHub Actions.
 Builds empacotadas de Windows agora tambem verificam atualizacoes em GitHub Releases no startup e periodicamente durante a sessao, e o renderer deixa essas checagens mais visiveis com texto no rodape e banners de update.
+O painel de sync/status agora tambem expoe um toggle opt-in para iniciar com o login do Windows, persistido localmente e desativado por padrao.
 
 ## Licenca
 

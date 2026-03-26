@@ -39,6 +39,8 @@ export interface WorkspaceRecord {
 
 export interface WindowState {
   alwaysOnTop: boolean
+  launchOnStartup: boolean
+  launchOnStartupSupported: boolean
   isMaximized: boolean
   platform: NodeJS.Platform
   appVersion: string
@@ -231,6 +233,7 @@ export interface StickbanApi {
   moveCard: (payload: CardMovePayload) => Promise<WorkspaceRecord>
   getWindowState: () => Promise<WindowState>
   setAlwaysOnTop: (value: boolean) => Promise<WindowState>
+  setLaunchOnStartup: (value: boolean) => Promise<WindowState>
   minimizeWindow: () => Promise<void>
   toggleMaximizeWindow: () => Promise<WindowState>
   closeWindow: () => Promise<void>

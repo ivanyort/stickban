@@ -25,6 +25,7 @@ const api: StickbanApi = {
   moveCard: (payload: CardMovePayload) => ipcRenderer.invoke('card:move', payload),
   getWindowState: () => ipcRenderer.invoke('window:getState'),
   setAlwaysOnTop: (value: boolean) => ipcRenderer.invoke('window:setAlwaysOnTop', value),
+  setLaunchOnStartup: (value: boolean) => ipcRenderer.invoke('window:setLaunchOnStartup', value),
   minimizeWindow: () => ipcRenderer.invoke('window:minimize'),
   toggleMaximizeWindow: () => ipcRenderer.invoke('window:toggleMaximize'),
   closeWindow: () => ipcRenderer.invoke('window:close'),

@@ -22,6 +22,7 @@ The current runnable milestone already includes:
 - Card drag and drop
 - SQLite persistence
 - Always-on-top support
+- Optional Windows launch-on-login preference, disabled by default
 - Synced-folder cloud sync via immutable operation files and periodic checkpoints
 - Packaged Windows update checks through GitHub Releases
 
@@ -49,6 +50,7 @@ The following are not current implementation reality yet:
 - Create, rename, reorder, move, and delete columns
 - Switch between multiple boards
 - Toggle always-on-top to keep the app visible
+- Optionally enable launch on Windows login in packaged Windows builds
 - Work fully locally even without internet
 - If a synced folder is configured, let the background file-based sync loop propagate changes across devices
 

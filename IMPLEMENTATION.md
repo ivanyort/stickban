@@ -29,6 +29,7 @@ This document tracks the real implementation state of the repository and the hig
 - Renderer now uses local Geist font assets and native column-based drag-and-drop to better match `references/frontend_v001`
 - Electron window now uses custom top-bar controls for close, minimize, and maximize/restore
 - Desktop window chrome now uses platform-specific native behavior: Windows uses `titleBarStyle: hidden` with `titleBarOverlay` for native window controls without the traditional title bar, while Linux keeps a frameless window with custom controls in the renderer
+- Packaged Windows builds now expose a persisted launch-on-login preference in the renderer, disabled by default and applied through Electron login item settings
 - Board title edits in the header now persist through SQLite instead of living only in renderer state
 - Multiple boards now exist as first-class persisted entities, with active board selection restored across app restarts
 - Columns are now board-specific and customizable, including create, rename, and delete flows in the renderer

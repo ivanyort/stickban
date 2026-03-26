@@ -19,6 +19,8 @@ interface BoardState {
   activeBoardId: string | null
   activeBoard: BoardRecord | null
   alwaysOnTop: boolean
+  launchOnStartup: boolean
+  launchOnStartupSupported: boolean
   isMaximized: boolean
   platform: string
   appVersion: string
@@ -45,6 +47,7 @@ interface BoardState {
   moveCard: (cardId: string, toColumnId: string, toIndex: number) => Promise<void>
   setEditingCard: (card: CardRecord | null) => void
   toggleAlwaysOnTop: () => Promise<void>
+  toggleLaunchOnStartup: () => Promise<void>
   minimizeWindow: () => Promise<void>
   toggleMaximizeWindow: () => Promise<void>
   closeWindow: () => Promise<void>
@@ -73,6 +76,8 @@ export const useBoardStore = create<BoardState>((set) => ({
   activeBoardId: null,
   activeBoard: null,
   alwaysOnTop: false,
+  launchOnStartup: false,
+  launchOnStartupSupported: false,
   isMaximized: false,
   platform: 'unknown',
   appVersion: '0.0.0',
@@ -100,6 +105,8 @@ export const useBoardStore = create<BoardState>((set) => ({
       set({
         ...applyWorkspace(workspace),
         alwaysOnTop: windowState.alwaysOnTop,
+        launchOnStartup: windowState.launchOnStartup,
+        launchOnStartupSupported: windowState.launchOnStartupSupported,
         isMaximized: windowState.isMaximized,
         platform: windowState.platform,
         appVersion: windowState.appVersion,
@@ -230,6 +237,20 @@ export const useBoardStore = create<BoardState>((set) => ({
     const windowState = await window.stickban.setAlwaysOnTop(!current)
     set({
       alwaysOnTop: windowState.alwaysOnTop,
+      launchOnStartup: windowState.launchOnStartup,
+      launchOnStartupSupported: windowState.launchOnStartupSupported,
+      isMaximized: windowState.isMaximized,
+      platform: windowState.platform,
+      appVersion: windowState.appVersion
+    })
+  },
+  toggleLaunchOnStartup: async () => {
+    const current = useBoardStore.getState().launchOnStartup
+    const windowState = await window.stickban.setLaunchOnStartup(!current)
+    set({
+      alwaysOnTop: windowState.alwaysOnTop,
+      launchOnStartup: windowState.launchOnStartup,
+      launchOnStartupSupported: windowState.launchOnStartupSupported,
       isMaximized: windowState.isMaximized,
       platform: windowState.platform,
       appVersion: windowState.appVersion
@@ -242,6 +263,8 @@ export const useBoardStore = create<BoardState>((set) => ({
     const windowState = await window.stickban.toggleMaximizeWindow()
     set({
       alwaysOnTop: windowState.alwaysOnTop,
+      launchOnStartup: windowState.launchOnStartup,
+      launchOnStartupSupported: windowState.launchOnStartupSupported,
       isMaximized: windowState.isMaximized,
       platform: windowState.platform,
       appVersion: windowState.appVersion

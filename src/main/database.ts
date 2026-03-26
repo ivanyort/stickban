@@ -20,6 +20,7 @@ const DEFAULT_COLUMNS = ['To Do', 'Doing', 'Done']
 const ACTIVE_BOARD_KEY = 'active_board_id'
 const DEVICE_ID_KEY = 'sync_device_id'
 const LAMPORT_CLOCK_KEY = 'sync_lamport_clock'
+const LAUNCH_ON_STARTUP_KEY = 'launch_on_startup'
 const ORDER_GAP = 1024
 const MIN_ORDER_GAP = 0.000001
 
@@ -181,6 +182,15 @@ function setStateValue(key: string, value: string): void {
       `
     )
     .run(key, value)
+}
+
+function getBooleanStateValue(key: string, defaultValue = false): boolean {
+  const value = getStateValue(key)
+  if (value === null) {
+    return defaultValue
+  }
+
+  return value === 'true'
 }
 
 function getCurrentLamportClock(): number {
@@ -1333,6 +1343,14 @@ export function closeDatabase(): void {
   }
 
   operationEmitter = null
+}
+
+export function getLaunchOnStartupPreference(): boolean {
+  return getBooleanStateValue(LAUNCH_ON_STARTUP_KEY, false)
+}
+
+export function setLaunchOnStartupPreference(value: boolean): void {
+  setStateValue(LAUNCH_ON_STARTUP_KEY, value ? 'true' : 'false')
 }
 
 export async function backupDatabase(destinationFile: string): Promise<void> {

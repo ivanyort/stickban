@@ -12,6 +12,7 @@ import {
   Pin,
   PinOff,
   Plus,
+  Power,
   RefreshCw,
   Square,
   Trash2,
@@ -37,6 +38,8 @@ function App(): JSX.Element {
     activeBoardId,
     activeBoard,
     alwaysOnTop,
+    launchOnStartup,
+    launchOnStartupSupported,
     isMaximized,
     platform,
     appVersion,
@@ -63,6 +66,7 @@ function App(): JSX.Element {
     moveCard,
     setEditingCard,
     toggleAlwaysOnTop,
+    toggleLaunchOnStartup,
     minimizeWindow,
     toggleMaximizeWindow,
     closeWindow,
@@ -745,6 +749,32 @@ function App(): JSX.Element {
                 label="Last checkpoint"
                 value={syncStatus?.lastCheckpointAtUtc ? formatSyncMoment(syncStatus.lastCheckpointAtUtc) : 'Not yet'}
               />
+            </div>
+
+            <div className="rounded-2xl border border-border/80 bg-background/80 px-3 py-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Startup
+                  </div>
+                  <div className="mt-2 text-sm font-medium text-foreground">Open Stickban when you sign in to Windows</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {launchOnStartupSupported
+                      ? 'Disabled by default. When enabled, Stickban starts automatically after your Windows user login.'
+                      : 'Available only in packaged Windows builds. Development runs and non-Windows builds keep this disabled.'}
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant={launchOnStartup ? 'default' : 'outline'}
+                  onClick={() => void toggleLaunchOnStartup()}
+                  disabled={!launchOnStartupSupported}
+                  className="gap-1.5 text-xs"
+                >
+                  <Power className="h-3.5 w-3.5" />
+                  <span>{launchOnStartup ? 'Enabled' : 'Disabled'}</span>
+                </Button>
+              </div>
             </div>
 
             <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
