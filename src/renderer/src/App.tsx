@@ -39,6 +39,7 @@ function App(): JSX.Element {
     activeBoard,
     alwaysOnTop,
     launchOnStartup,
+    launchOnStartupConfigured,
     launchOnStartupSupported,
     isMaximized,
     platform,
@@ -760,7 +761,9 @@ function App(): JSX.Element {
                   <div className="mt-2 text-sm font-medium text-foreground">Open Stickban when you sign in to Windows</div>
                   <div className="mt-1 text-xs text-muted-foreground">
                     {launchOnStartupSupported
-                      ? 'Disabled by default. When enabled, Stickban starts automatically after your Windows user login.'
+                      ? launchOnStartupConfigured && !launchOnStartup
+                        ? 'Stickban is registered for startup, but Windows currently has it disabled in Startup Apps or Task Manager.'
+                        : 'Disabled by default. When enabled, Stickban starts automatically after your Windows user login.'
                       : 'Available only in packaged Windows builds. Development runs and non-Windows builds keep this disabled.'}
                   </div>
                 </div>
@@ -772,7 +775,7 @@ function App(): JSX.Element {
                   className="gap-1.5 text-xs"
                 >
                   <Power className="h-3.5 w-3.5" />
-                  <span>{launchOnStartup ? 'Enabled' : 'Disabled'}</span>
+                  <span>{launchOnStartup ? 'Enabled' : launchOnStartupConfigured ? 'Disabled by Windows' : 'Disabled'}</span>
                 </Button>
               </div>
             </div>

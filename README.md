@@ -13,7 +13,7 @@ Stickban is a desktop Kanban application focused on speed, low friction, and con
 This repository is in bootstrap stage. The product specification exists in [`SPEC.md`](./SPEC.md), and the first runnable application scaffold is now in place.
 
 The documentation in this repository is intended to establish direction while implementation is still maturing.
-The current runnable milestone is still local-first, but now also includes cloud sync through a user-selected synced folder. The app currently covers multiple boards, board-specific columns, column reordering and cross-board moves, SQLite persistence, drag and drop, always-on-top behavior, an optional Windows launch-on-login preference that stays disabled by default, immutable sync operation files, periodic sync checkpoints, guarded first-time sync bootstrap behavior, checkpoint validation, retry of out-of-order remote operations with missing dependencies, local recovery backups before destructive remote adoption, and rejection of orphan remote operations that would corrupt workspace state.
+The current runnable milestone is still local-first, but now also includes cloud sync through a user-selected synced folder. The app currently covers multiple boards, board-specific columns, column reordering and cross-board moves, SQLite persistence, drag and drop, always-on-top behavior, an optional Windows launch-on-login preference that stays disabled by default and now distinguishes app-level registration from Windows-level startup disablement, immutable sync operation files, periodic sync checkpoints, guarded first-time sync bootstrap behavior, checkpoint validation, retry of out-of-order remote operations with missing dependencies, local recovery backups before destructive remote adoption, and rejection of orphan remote operations that would corrupt workspace state.
 
 ## Product Direction
 
@@ -38,7 +38,7 @@ The current runnable milestone is still local-first, but now also includes cloud
 - Keep the local desktop stack: Electron, React + TypeScript, `better-sqlite3`, Zustand, Tailwind CSS, and renderer-managed drag interactions
 - Keep SQLite as the operational source of truth while sync propagates immutable operation files plus periodic checkpoints through a synced folder
 - Avoid provider APIs, OAuth, and managed cloud infrastructure
-- Focus the current milestone on a local-first workspace with multiple boards, board-specific columns, inline column rename, column drag and drop, SQLite persistence, always-on-top behavior, optional Windows launch-on-login, and synced-folder cloud sync
+- Focus the current milestone on a local-first workspace with multiple boards, board-specific columns, inline column rename, column drag and drop, SQLite persistence, always-on-top behavior, optional Windows launch-on-login with clearer Windows startup-state diagnostics, and synced-folder cloud sync
 
 ## Local Development
 
@@ -137,7 +137,7 @@ The structure below is planned, not implemented yet.
 
 For the detailed roadmap, see [`ROADMAP.md`](./ROADMAP.md).
 
-- Current: local workspace, multiple boards, customizable columns, column drag and drop, SQLite persistence, always-on-top, optional Windows launch-on-login, synced-folder cloud sync
+- Current: local workspace, multiple boards, customizable columns, column drag and drop, SQLite persistence, always-on-top, optional Windows launch-on-login with Windows-side disablement detection, synced-folder cloud sync
 - Next: multi-language interface, system tray, themes, sync hardening
 - Future: custom fields, notifications, richer conflict inspection and recovery, mobile companion
 
@@ -164,7 +164,7 @@ For the detailed roadmap, see [`ROADMAP.md`](./ROADMAP.md).
 - `feat` bumps minor, `fix` and operational commit types bump patch, and `BREAKING CHANGE` or `type!` bumps major
 - Public release artifacts are currently produced for Windows only
 - Windows releases are distributed as an NSIS installer
-- Packaged Windows builds expose an opt-in launch-on-login setting inside the app, and it remains disabled by default
+- Packaged Windows builds expose an opt-in launch-on-login setting inside the app, it remains disabled by default, and the UI now calls out when Windows has disabled the startup entry separately from the app preference
 - Packaged Windows builds now check public GitHub Releases for updates in-app and can restart to install a downloaded update
 - The installer and in-app updater keep automatic relaunch disabled by default after install/update
 - Linux packaging remains available for local builds, but Linux artifacts are not currently published in GitHub Releases
@@ -186,7 +186,7 @@ The current sync model works without paid services, provider APIs, OAuth, or man
 The repository now also includes an automated regression suite focused on sync bootstrap, deferred remote operations, recovery backups, shutdown flush behavior, and immediate workspace refresh after sync-folder selection.
 The app footer displays the runtime application version exposed by Electron, which is intended to match the version injected into packaged releases by the GitHub Actions release workflow.
 Packaged Windows builds now also check GitHub Releases for updates on startup and periodically during the session, and the renderer surfaces those checks more explicitly through footer status and update banners.
-The sync/status panel now also exposes an opt-in Windows launch-on-login toggle, which persists locally and defaults to disabled.
+The sync/status panel now also exposes an opt-in Windows launch-on-login toggle, which persists locally, defaults to disabled, and now reflects when Windows Startup Apps has disabled the registered entry.
 
 ## License
 

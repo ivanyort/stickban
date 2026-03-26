@@ -20,6 +20,7 @@ interface BoardState {
   activeBoard: BoardRecord | null
   alwaysOnTop: boolean
   launchOnStartup: boolean
+  launchOnStartupConfigured: boolean
   launchOnStartupSupported: boolean
   isMaximized: boolean
   platform: string
@@ -77,6 +78,7 @@ export const useBoardStore = create<BoardState>((set) => ({
   activeBoard: null,
   alwaysOnTop: false,
   launchOnStartup: false,
+  launchOnStartupConfigured: false,
   launchOnStartupSupported: false,
   isMaximized: false,
   platform: 'unknown',
@@ -106,6 +108,7 @@ export const useBoardStore = create<BoardState>((set) => ({
         ...applyWorkspace(workspace),
         alwaysOnTop: windowState.alwaysOnTop,
         launchOnStartup: windowState.launchOnStartup,
+        launchOnStartupConfigured: windowState.launchOnStartupConfigured,
         launchOnStartupSupported: windowState.launchOnStartupSupported,
         isMaximized: windowState.isMaximized,
         platform: windowState.platform,
@@ -238,6 +241,7 @@ export const useBoardStore = create<BoardState>((set) => ({
     set({
       alwaysOnTop: windowState.alwaysOnTop,
       launchOnStartup: windowState.launchOnStartup,
+      launchOnStartupConfigured: windowState.launchOnStartupConfigured,
       launchOnStartupSupported: windowState.launchOnStartupSupported,
       isMaximized: windowState.isMaximized,
       platform: windowState.platform,
@@ -250,6 +254,7 @@ export const useBoardStore = create<BoardState>((set) => ({
     set({
       alwaysOnTop: windowState.alwaysOnTop,
       launchOnStartup: windowState.launchOnStartup,
+      launchOnStartupConfigured: windowState.launchOnStartupConfigured,
       launchOnStartupSupported: windowState.launchOnStartupSupported,
       isMaximized: windowState.isMaximized,
       platform: windowState.platform,
@@ -264,6 +269,7 @@ export const useBoardStore = create<BoardState>((set) => ({
     set({
       alwaysOnTop: windowState.alwaysOnTop,
       launchOnStartup: windowState.launchOnStartup,
+      launchOnStartupConfigured: windowState.launchOnStartupConfigured,
       launchOnStartupSupported: windowState.launchOnStartupSupported,
       isMaximized: windowState.isMaximized,
       platform: windowState.platform,

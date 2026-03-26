@@ -40,6 +40,7 @@ export interface WorkspaceRecord {
 export interface WindowState {
   alwaysOnTop: boolean
   launchOnStartup: boolean
+  launchOnStartupConfigured: boolean
   launchOnStartupSupported: boolean
   isMaximized: boolean
   platform: NodeJS.Platform

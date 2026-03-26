@@ -25,9 +25,33 @@ import { UpdateManager } from './update'
 let mainWindow: BrowserWindow | null = null
 let syncManager: SyncManager | null = null
 let updateManager: UpdateManager | null = null
+const WINDOWS_APP_USER_MODEL_ID = 'com.ivanyort.stickban'
+
+if (process.platform === 'win32') {
+  app.setAppUserModelId(WINDOWS_APP_USER_MODEL_ID)
+}
 
 function isLaunchOnStartupSupported(): boolean {
   return process.platform === 'win32' && app.isPackaged
+}
+
+function getLaunchOnStartupState(): { configured: boolean; enabled: boolean } {
+  if (!isLaunchOnStartupSupported()) {
+    const fallback = getLaunchOnStartupPreference()
+    return {
+      configured: fallback,
+      enabled: fallback
+    }
+  }
+
+  const settings = app.getLoginItemSettings({
+    path: process.execPath
+  })
+
+  return {
+    configured: settings.openAtLogin,
+    enabled: settings.executableWillLaunchAtLogin
+  }
 }
 
 function applyLaunchOnStartupPreference(enabled: boolean): void {
@@ -36,16 +60,19 @@ function applyLaunchOnStartupPreference(enabled: boolean): void {
   }
 
   app.setLoginItemSettings({
-    openAtLogin: enabled
+    openAtLogin: enabled,
+    enabled,
+    path: process.execPath
   })
 }
 
 function getWindowState() {
+  const startupState = getLaunchOnStartupState()
+
   return {
     alwaysOnTop: mainWindow?.isAlwaysOnTop() ?? false,
-    launchOnStartup: isLaunchOnStartupSupported()
-      ? app.getLoginItemSettings().openAtLogin
-      : getLaunchOnStartupPreference(),
+    launchOnStartup: startupState.enabled,
+    launchOnStartupConfigured: startupState.configured,
     launchOnStartupSupported: isLaunchOnStartupSupported(),
     isMaximized: mainWindow?.isMaximized() ?? false,
     platform: process.platform,
@@ -139,9 +166,12 @@ function registerIpc(): void {
   })
   ipcMain.handle('window:toggleMaximize', () => {
     if (!mainWindow) {
+      const startupState = getLaunchOnStartupState()
+
       return {
         alwaysOnTop: false,
-        launchOnStartup: getLaunchOnStartupPreference(),
+        launchOnStartup: startupState.enabled,
+        launchOnStartupConfigured: startupState.configured,
         launchOnStartupSupported: isLaunchOnStartupSupported(),
         isMaximized: false,
         platform: process.platform,

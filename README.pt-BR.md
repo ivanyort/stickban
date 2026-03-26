@@ -186,7 +186,7 @@ O modelo atual de sync funciona sem servicos pagos, APIs de provedores, OAuth ou
 O repositorio agora tambem inclui uma suite automatizada de regressao focada em bootstrap do sync, operacoes remotas adiadas, backups de recovery, flush no encerramento e refresh imediato do workspace apos a escolha da pasta sincronizada.
 O rodape do app exibe a versao de runtime exposta pelo Electron, pensada para coincidir com a versao injetada nas releases empacotadas pelo workflow de GitHub Actions.
 Builds empacotadas de Windows agora tambem verificam atualizacoes em GitHub Releases no startup e periodicamente durante a sessao, e o renderer deixa essas checagens mais visiveis com texto no rodape e banners de update.
-O painel de sync/status agora tambem expoe um toggle opt-in para iniciar com o login do Windows, persistido localmente e desativado por padrao.
+O painel de sync/status agora tambem expoe um toggle opt-in para iniciar com o login do Windows, persistido localmente, desativado por padrao, e que passa a diferenciar quando a entrada foi registrada pelo app, mas ficou desabilitada nas configuracoes de inicializacao do proprio Windows.
 
 ## Licenca
 
